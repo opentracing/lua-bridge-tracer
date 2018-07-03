@@ -1,3 +1,5 @@
+#include "lua_tracer.h"
+
 #include <iostream>
 #include <opentracing/dynamic_load.h>
 
@@ -6,36 +8,29 @@ extern "C" {
 #include <lua/lauxlib.h>
 } // extern "C"
 
-static int load_tracer(lua_State* L) {
-  if (lua_gettop(L) < 2) {
-    return luaL_error(L, "load_tracer takes two arguments");
+static void setfuncs (lua_State *L, const luaL_Reg *l, int nup) {
+  luaL_checkstack(L, nup+1, "too many upvalues");
+  for (; l->name != NULL; l++) {  /* fill the table with given functions */
+    int i;
+    lua_pushstring(L, l->name);
+    for (i = 0; i < nup; i++)  /* copy upvalues to the top */
+      lua_pushvalue(L, -(nup+1));
+    lua_pushcclosure(L, l->func, nup);  /* closure with those upvalues */
+    lua_settable(L, -(nup + 3));
   }
-  if (lua_type(L, -2) != LUA_TSTRING) {
-    return luaL_error(L, "tracer_library must be a string");
-  }
-  if (lua_type(L, -1) != LUA_TSTRING) {
-    return luaL_error(L, "tracer_config must be a string");
-  }
-  auto library_name = lua_tostring(L, -2);
-  auto config = lua_tostring(L, -1);
-
-  std::string error_message;
-  auto handle_maybe =
-      opentracing::DynamicallyLoadTracingLibrary(library_name, error_message);
-  if (!handle_maybe) {
-    return luaL_error(L, error_message.c_str());
-  }
-  auto& handle = *handle_maybe;
-  auto tracer_maybe = handle.tracer_factory().MakeTracer(config, error_message);
-  if (!tracer_maybe) {
-    return luaL_error(L, error_message.c_str());
-  }
-
-  std::cout << "Creating a tracer...\n";
-  return 0;
+  lua_pop(L, nup);  /* remove upvalues */
 }
 
 extern "C" int luaopen_opentracing_bridge_tracer(lua_State* L) {
-  lua_register(L, "load_tracer", load_tracer);
-  return 0;
+  luaL_newmetatable(L, "lua_opentracing_bridge.tracer");
+
+  /* set its __gc field */
+  lua_pushstring(L, "__gc");
+  lua_pushcfunction(L, lua_bridge_tracer::LuaTracer::free_lua_tracer);
+  lua_settable(L, -3);
+
+  lua_newtable(L);
+  setfuncs(L, lua_bridge_tracer::LuaTracer::methods, 0);
+  lua_setglobal(L, "bridge_tracer");
+  return 1;
 }
