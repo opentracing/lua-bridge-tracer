@@ -8,25 +8,22 @@ extern "C" {
 } // extern "C"
 
 namespace lua_bridge_tracer {
-class LuaTracer {
+class LuaSpan {
  public:
-   explicit LuaTracer(const std::shared_ptr<opentracing::Tracer>& tracer)
-     : tracer_{tracer}
+   explicit LuaSpan(const std::shared_ptr<opentracing::Span>& span)
+     : span_{span}
    {}
-
-  static int new_lua_tracer(lua_State* L) noexcept;
 
   static int free(lua_State* L) noexcept;
 
-  static int start_span(lua_State* L) noexcept;
+  static int finish(lua_State* L) noexcept;
 
   static const char* name;
 
   static const char* metatable;
 
   static const struct luaL_Reg methods [];
-
  private:
-  std::shared_ptr<opentracing::Tracer> tracer_;
+   std::shared_ptr<opentracing::Span> span_;
 };
 }  // namespace lua_bridge_tracer
