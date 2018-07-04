@@ -15,7 +15,7 @@ namespace lua_bridge_tracer {
 // check_lua_tracer
 //------------------------------------------------------------------------------
 static LuaTracer* check_lua_tracer(lua_State* L) {
-  void* user_data = luaL_checkudata(L, 1, LuaTracer::metatable);
+  void* user_data = luaL_checkudata(L, 1, LuaTracer::description.metatable);
   luaL_argcheck(L, user_data != NULL, 1, "`" CLASS_NAME "' expected");
   return *static_cast<LuaTracer**>(user_data);
 }
@@ -35,7 +35,7 @@ int LuaTracer::new_lua_tracer(lua_State* L) noexcept {
     *userdata = tracer.release();
 
     // tag the metatable
-    luaL_getmetatable(L, metatable);
+    luaL_getmetatable(L, description.metatable);
     lua_setmetatable(L, -2);
 
     return 1;
@@ -72,7 +72,7 @@ int LuaTracer::start_span(lua_State* L) noexcept {
       new LuaSpan{std::shared_ptr<opentracing::Span>{span.release()}}};
     *userdata = lua_span.release();
 
-    luaL_getmetatable(L, LuaSpan::metatable);
+    luaL_getmetatable(L, LuaSpan::description.metatable);
     lua_setmetatable(L, -2);
 
     return 1;
@@ -80,24 +80,22 @@ int LuaTracer::start_span(lua_State* L) noexcept {
     lua_pushstring(L, e.what());
   }
   return lua_error(L);
-  return 0; 
 }
 
 //------------------------------------------------------------------------------
-// name
+// description
 //------------------------------------------------------------------------------
-const char* LuaTracer::name = CLASS_NAME;
-
-//------------------------------------------------------------------------------
-// metatable
-//------------------------------------------------------------------------------
-const char* LuaTracer::metatable = "lua_opentracing_bridge.tracer";
-
-//------------------------------------------------------------------------------
-// methods
-//------------------------------------------------------------------------------
-const struct luaL_Reg LuaTracer::methods[] = {
+const LuaClassDescription LuaTracer::description = {
+  CLASS_NAME,
+  "lua_opentracing_bridge.tracer",
+  LuaTracer::free,
+  {
     {"new", LuaTracer::new_lua_tracer},
+    {nullptr, nullptr}
+  },
+  {
     {"start_span", LuaTracer::start_span},
-    {nullptr, nullptr}};
+    {nullptr, nullptr}
+  }
+};
 }  // namespace lua_bridge_tracer

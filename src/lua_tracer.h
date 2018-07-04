@@ -1,5 +1,7 @@
 #pragma once
 
+#include "lua_class_description.h"
+
 #include <opentracing/tracer.h>
 
 extern "C" {
@@ -20,12 +22,7 @@ class LuaTracer {
 
   static int start_span(lua_State* L) noexcept;
 
-  static const char* name;
-
-  static const char* metatable;
-
-  static const struct luaL_Reg methods [];
-
+  static const LuaClassDescription description;
  private:
   std::shared_ptr<opentracing::Tracer> tracer_;
 };

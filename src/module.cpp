@@ -1,8 +1,9 @@
 #include "lua_tracer.h"
 #include "lua_span.h"
 
-#include <iostream>
 #include <opentracing/dynamic_load.h>
+#include <iostream>
+#include <iterator>
 
 extern "C" {
 #include <lua.h>
@@ -22,31 +23,30 @@ static void setfuncs (lua_State *L, const luaL_Reg *l, int nup) {
   lua_pop(L, nup);  /* remove upvalues */
 }
 
-static void make_lua_class(lua_State* L, const char* name,
-                           const char* metatable, const luaL_Reg* methods,
-                           int (*free)(lua_State*)) {
-  luaL_newmetatable(L, metatable);
+static void make_lua_class(
+    lua_State* L, const lua_bridge_tracer::LuaClassDescription& description) {
+  luaL_newmetatable(L, description.metatable);
 
-  lua_pushstring(L, "__gc");
-  lua_pushcfunction(L, free);
-  lua_settable(L, -3);
+  if (description.free_function != nullptr) {
+    lua_pushstring(L, "__gc");
+    lua_pushcfunction(L, description.free_function);
+    lua_settable(L, -3);
+  }
+
+  setfuncs(L, &*std::begin(description.methods), 0);
+
+  lua_pushstring(L, "__index");
+  lua_pushvalue(L, -2); /* pushes the metatable */
+  lua_settable(L, -3);  /* metatable.__index = metatable */
 
   lua_newtable(L);
-  setfuncs(L, methods, 0);
-  lua_setglobal(L, name);
+  setfuncs(L, &*std::begin(description.functions), 0);
+  lua_setglobal(L, description.name);
 }
 
 extern "C" int luaopen_opentracing_bridge_tracer(lua_State* L) {
-  make_lua_class(L, lua_bridge_tracer::LuaTracer::name,
-                 lua_bridge_tracer::LuaTracer::metatable,
-                 lua_bridge_tracer::LuaTracer::methods,
-                 lua_bridge_tracer::LuaTracer::free);
-
-  make_lua_class(L, 
-      lua_bridge_tracer::LuaSpan::name,
-      lua_bridge_tracer::LuaSpan::metatable,
-      lua_bridge_tracer::LuaSpan::methods,
-      lua_bridge_tracer::LuaSpan::free);
+  make_lua_class(L, lua_bridge_tracer::LuaTracer::description);
+  make_lua_class(L, lua_bridge_tracer::LuaSpan::description);
 
   return 0;
 }

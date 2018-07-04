@@ -1,13 +1,13 @@
 #include "lua_span.h"
 
-#define CLASS_NAME "bridge_tracer"
+#define CLASS_NAME "bridge_tracer_span"
 
 namespace lua_bridge_tracer {
 //------------------------------------------------------------------------------
 // check_lua_span
 //------------------------------------------------------------------------------
 static LuaSpan* check_lua_span(lua_State* L) noexcept {
-  void* user_data = luaL_checkudata(L, 1, LuaSpan::metatable);
+  void* user_data = luaL_checkudata(L, 1, LuaSpan::description.metatable);
   luaL_argcheck(L, user_data != NULL, 1, "`" CLASS_NAME "' expected");
   return *static_cast<LuaSpan**>(user_data);
 }
@@ -25,23 +25,24 @@ int LuaSpan::free(lua_State* L) noexcept {
 // finish
 //------------------------------------------------------------------------------
 int LuaSpan::finish(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  span->span_->Finish();
   return 0;
 }
 
 //------------------------------------------------------------------------------
-// name
+// description
 //------------------------------------------------------------------------------
-const char* LuaSpan::name = CLASS_NAME;
-
-//------------------------------------------------------------------------------
-// metatable
-//------------------------------------------------------------------------------
-const char* LuaSpan::metatable = "lua_opentracing_bridge.span";
-
-//------------------------------------------------------------------------------
-// methods
-//------------------------------------------------------------------------------
-const struct luaL_Reg LuaSpan::methods[] = {
+const LuaClassDescription LuaSpan::description = {
+  CLASS_NAME,
+  "lua_opentracing_bridge.span",
+  LuaSpan::free,
+  {
+    {nullptr, nullptr}
+  },
+  {
     {"finish", LuaSpan::finish},
-    {nullptr, nullptr}};
+    {nullptr, nullptr}
+  }
+};
 }  // namespace lua_bridge_tracer
