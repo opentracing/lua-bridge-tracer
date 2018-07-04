@@ -16,8 +16,8 @@ static LuaSpan* check_lua_span(lua_State* L) noexcept {
 // free
 //------------------------------------------------------------------------------
 int LuaSpan::free(lua_State* L) noexcept {
-  auto tracer = static_cast<LuaSpan**>(lua_touserdata(L, 1));
-  delete *tracer;
+  auto span = check_lua_span(L);
+  delete span;
   return 0;
 }
 

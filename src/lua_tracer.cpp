@@ -83,6 +83,15 @@ int LuaTracer::start_span(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// close
+//------------------------------------------------------------------------------
+int LuaTracer::close(lua_State* L) noexcept {
+  auto tracer = check_lua_tracer(L);
+  tracer->tracer_->Close();
+  return 0;
+}
+
+//------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaTracer::description = {
@@ -95,6 +104,7 @@ const LuaClassDescription LuaTracer::description = {
   },
   {
     {"start_span", LuaTracer::start_span},
+    {"close", LuaTracer::close},
     {nullptr, nullptr}
   }
 };

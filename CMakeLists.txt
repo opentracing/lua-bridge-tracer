@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 
 project(lua-bridge-tracer)
 
-find_package(Lua51 REQUIRED)
+find_package(Lua 5.1)
 find_package(OpenTracing 1.4.0)
 
 set(CMAKE_CXX_STANDARD 11)

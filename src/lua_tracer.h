@@ -16,14 +16,16 @@ class LuaTracer {
      : tracer_{tracer}
    {}
 
+  static const LuaClassDescription description;
+ private:
+  std::shared_ptr<opentracing::Tracer> tracer_;
+
   static int new_lua_tracer(lua_State* L) noexcept;
 
   static int free(lua_State* L) noexcept;
 
   static int start_span(lua_State* L) noexcept;
 
-  static const LuaClassDescription description;
- private:
-  std::shared_ptr<opentracing::Tracer> tracer_;
+  static int close(lua_State* L) noexcept;
 };
 }  // namespace lua_bridge_tracer
