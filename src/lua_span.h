@@ -4,11 +4,6 @@
 
 #include <opentracing/tracer.h>
 
-extern "C" {
-#include <lua.h>
-#include <lua/lauxlib.h>
-} // extern "C"
-
 namespace lua_bridge_tracer {
 class LuaSpan {
  public:

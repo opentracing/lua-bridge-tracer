@@ -39,9 +39,11 @@ static void make_lua_class(
   lua_pushvalue(L, -2); /* pushes the metatable */
   lua_settable(L, -3);  /* metatable.__index = metatable */
 
-  lua_newtable(L);
-  setfuncs(L, &*std::begin(description.functions), 0);
-  lua_setglobal(L, description.name);
+  if (description.name != nullptr) {
+    lua_newtable(L);
+    setfuncs(L, &*std::begin(description.functions), 0);
+    lua_setglobal(L, description.name);
+  }
 }
 
 extern "C" int luaopen_opentracing_bridge_tracer(lua_State* L) {

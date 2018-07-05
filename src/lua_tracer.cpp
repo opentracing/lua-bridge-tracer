@@ -1,22 +1,22 @@
 #include "lua_tracer.h"
 
-#include "lua_span.h"
 #include "dynamic_tracer.h"
+#include "lua_span.h"
 
 #include <opentracing/dynamic_load.h>
 
 #include <iostream>
 #include <stdexcept>
 
-#define CLASS_NAME "bridge_tracer"
+#define METATABLE "lua_opentracing_bridge.tracer"
 
 namespace lua_bridge_tracer {
 //------------------------------------------------------------------------------
 // check_lua_tracer
 //------------------------------------------------------------------------------
-static LuaTracer* check_lua_tracer(lua_State* L) {
-  void* user_data = luaL_checkudata(L, 1, LuaTracer::description.metatable);
-  luaL_argcheck(L, user_data != NULL, 1, "`" CLASS_NAME "' expected");
+static LuaTracer* check_lua_tracer(lua_State* L) noexcept {
+  void* user_data = luaL_checkudata(L, 1, METATABLE);
+  luaL_argcheck(L, user_data != NULL, 1, "`" METATABLE "' expected");
   return *static_cast<LuaTracer**>(user_data);
 }
 
@@ -57,11 +57,10 @@ int LuaTracer::free(lua_State* L) noexcept {
 //------------------------------------------------------------------------------
 // start_span
 //------------------------------------------------------------------------------
-int LuaTracer::start_span(lua_State* L) noexcept { 
+int LuaTracer::start_span(lua_State* L) noexcept {
   auto tracer = check_lua_tracer(L);
   auto operation_name = luaL_checkstring(L, 2);
-  auto userdata =
-      static_cast<LuaSpan**>(lua_newuserdata(L, sizeof(LuaSpan*)));
+  auto userdata = static_cast<LuaSpan**>(lua_newuserdata(L, sizeof(LuaSpan*)));
 
   try {
     auto span = tracer->tracer_->StartSpan(operation_name);
@@ -69,7 +68,7 @@ int LuaTracer::start_span(lua_State* L) noexcept {
       throw std::runtime_error{"unable to create span"};
     }
     auto lua_span = std::unique_ptr<LuaSpan>{
-      new LuaSpan{std::shared_ptr<opentracing::Span>{span.release()}}};
+        new LuaSpan{std::shared_ptr<opentracing::Span>{span.release()}}};
     *userdata = lua_span.release();
 
     luaL_getmetatable(L, LuaSpan::description.metatable);
@@ -95,17 +94,11 @@ int LuaTracer::close(lua_State* L) noexcept {
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaTracer::description = {
-  CLASS_NAME,
-  "lua_opentracing_bridge.tracer",
-  LuaTracer::free,
-  {
-    {"new", LuaTracer::new_lua_tracer},
-    {nullptr, nullptr}
-  },
-  {
-    {"start_span", LuaTracer::start_span},
-    {"close", LuaTracer::close},
-    {nullptr, nullptr}
-  }
-};
+    "bridge_tracer",
+    METATABLE,
+    LuaTracer::free,
+    {{"new", LuaTracer::new_lua_tracer}, {nullptr, nullptr}},
+    {{"start_span", LuaTracer::start_span},
+     {"close", LuaTracer::close},
+     {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
