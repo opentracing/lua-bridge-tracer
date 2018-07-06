@@ -16,16 +16,14 @@ class LuaSpanContext {
 
   static const LuaClassDescription description;
 
-  static LuaTracer* check_lua_span_context(lua_State* L) noexcept;
-
- private:
-  std::shared_ptr<const opentracing::Span> span_;
-  std::unique_ptr<const opentracing::SpanContext> span_context_;
-
   const opentracing::SpanContext& span_context() const noexcept {
     if (span_ != nullptr) return span_->context();
     return *span_context_;
   }
+
+ private:
+  std::shared_ptr<const opentracing::Span> span_;
+  std::unique_ptr<const opentracing::SpanContext> span_context_;
 
   static int free(lua_State* L) noexcept;
 };

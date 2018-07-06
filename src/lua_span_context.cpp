@@ -9,7 +9,7 @@ namespace lua_bridge_tracer {
 LuaTracer* LuaSpanContext::check_lua_span_context(lua_State* L) noexcept {
   void* user_data = luaL_checkudata(L, 1, METATABLE);
   luaL_argcheck(L, user_data != NULL, 1, "`" METATABLE "' expected");
-  return *static_cast<LuaTracer**>(user_data);
+  return *static_cast<LuaSpanContext**>(user_data);
 }
 
 //------------------------------------------------------------------------------
