@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <cstdint>
 
 #define METATABLE "lua_opentracing_bridge.tracer"
 
@@ -18,6 +19,46 @@ static LuaTracer* check_lua_tracer(lua_State* L) noexcept {
   void* user_data = luaL_checkudata(L, 1, METATABLE);
   luaL_argcheck(L, user_data != NULL, 1, "`" METATABLE "' expected");
   return *static_cast<LuaTracer**>(user_data);
+}
+
+//------------------------------------------------------------------------------
+// compute_start_time
+//------------------------------------------------------------------------------
+static std::chrono::system_clock::time_point compute_start_time(lua_State* L) {
+  using SystemClock = std::chrono::system_clock;
+  switch (lua_type(L, -1)) {
+    case LUA_TNUMBER:
+      break;
+    case LUA_TNIL:
+    case LUA_TNONE:
+      return {};
+    default:
+      throw std::runtime_error{"start_time must be a number"};
+  }
+  auto time_since_epoch =
+      std::chrono::microseconds{static_cast<uint64_t>(lua_tonumber(L, -1))};
+  return SystemClock::from_time_t(std::time_t(0)) +
+         std::chrono::duration_cast<SystemClock::duration>(time_since_epoch);
+}
+
+//------------------------------------------------------------------------------
+// compute_start_span_options
+//------------------------------------------------------------------------------
+static opentracing::StartSpanOptions compute_start_span_options(lua_State* L) {
+  auto top = lua_gettop(L);
+  opentracing::StartSpanOptions result;
+  if (top < 3) {
+    return result;
+  }
+  if (top > 3) {
+    throw std::runtime_error{"too many arguments"};
+  }
+
+  lua_getfield(L, -1, "start_time");
+  result.start_system_timestamp = compute_start_time(L);
+  lua_pop(L, 1);
+
+  return result;
 }
 
 //------------------------------------------------------------------------------
@@ -61,9 +102,15 @@ int LuaTracer::start_span(lua_State* L) noexcept {
   auto tracer = check_lua_tracer(L);
   auto operation_name = luaL_checkstring(L, 2);
   auto userdata = static_cast<LuaSpan**>(lua_newuserdata(L, sizeof(LuaSpan*)));
+  auto top = lua_gettop(L);
+  if (top >= 3) {
+    luaL_checktype(L, 3, LUA_TTABLE);
+  }
 
   try {
-    auto span = tracer->tracer_->StartSpan(operation_name);
+    auto start_span_options = compute_start_span_options(L);
+    auto span = tracer->tracer_->StartSpanWithOptions(operation_name,
+                                                      start_span_options);
     if (span == nullptr) {
       throw std::runtime_error{"unable to create span"};
     }
