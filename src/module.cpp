@@ -1,5 +1,6 @@
 #include "lua_tracer.h"
 #include "lua_span.h"
+#include "lua_span_context.h"
 
 #include <opentracing/dynamic_load.h>
 #include <iostream>
@@ -49,6 +50,7 @@ static void make_lua_class(
 extern "C" int luaopen_opentracing_bridge_tracer(lua_State* L) {
   make_lua_class(L, lua_bridge_tracer::LuaTracer::description);
   make_lua_class(L, lua_bridge_tracer::LuaSpan::description);
+  make_lua_class(L, lua_bridge_tracer::LuaSpanContext::description);
 
   return 0;
 }

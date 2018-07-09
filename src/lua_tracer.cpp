@@ -6,7 +6,6 @@
 
 #include <opentracing/dynamic_load.h>
 
-#include <iostream>
 #include <stdexcept>
 #include <cstdint>
 
@@ -131,7 +130,7 @@ compute_references(lua_State* L) {
 
   auto num_references = luaL_len(L, -1);
   result.reserve(num_references);
-  for (int i=0; i<num_references; ++i) {
+  for (int i=1; i<num_references+1; ++i) {
     lua_pushinteger(L, i);
     lua_gettable(L, -2);
     result.push_back(compute_reference(L));
@@ -144,21 +143,17 @@ compute_references(lua_State* L) {
 //------------------------------------------------------------------------------
 // compute_start_span_options
 //------------------------------------------------------------------------------
-static opentracing::StartSpanOptions compute_start_span_options(lua_State* L) {
+static opentracing::StartSpanOptions compute_start_span_options(lua_State* L,
+                                                                int index) {
   auto top = lua_gettop(L);
   opentracing::StartSpanOptions result;
-  if (top < 3) {
-    return result;
-  }
-  if (top > 3) {
-    throw std::runtime_error{"too many arguments"};
-  }
 
-  lua_getfield(L, -1, "start_time");
+  lua_getfield(L, index, "start_time");
   result.start_system_timestamp = compute_start_time(L);
   lua_pop(L, 1);
 
-  lua_getfield(L, -1, "references");
+  lua_getfield(L, index, "references");
+  result.references = compute_references(L);
   lua_pop(L, 1);
 
   return result;
@@ -204,14 +199,17 @@ int LuaTracer::free(lua_State* L) noexcept {
 int LuaTracer::start_span(lua_State* L) noexcept {
   auto tracer = check_lua_tracer(L);
   auto operation_name = luaL_checkstring(L, 2);
-  auto userdata = static_cast<LuaSpan**>(lua_newuserdata(L, sizeof(LuaSpan*)));
-  auto top = lua_gettop(L);
-  if (top >= 3) {
+  auto num_arguments = lua_gettop(L);
+  if (num_arguments >= 3) {
     luaL_checktype(L, 3, LUA_TTABLE);
   }
+  auto userdata = static_cast<LuaSpan**>(lua_newuserdata(L, sizeof(LuaSpan*)));
 
   try {
-    auto start_span_options = compute_start_span_options(L);
+    opentracing::StartSpanOptions start_span_options;
+    if (num_arguments >= 3) {
+      start_span_options = compute_start_span_options(L, -2);
+    }
     auto span = tracer->tracer_->StartSpanWithOptions(operation_name,
                                                       start_span_options);
     if (span == nullptr) {

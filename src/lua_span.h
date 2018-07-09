@@ -18,5 +18,7 @@ class LuaSpan {
   static int free(lua_State* L) noexcept;
 
   static int finish(lua_State* L) noexcept;
+
+  static int context(lua_State* L) noexcept;
 };
 }  // namespace lua_bridge_tracer
