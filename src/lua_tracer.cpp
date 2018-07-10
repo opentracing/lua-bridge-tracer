@@ -8,6 +8,7 @@
 #include <opentracing/dynamic_load.h>
 
 #include <stdexcept>
+#include <sstream>
 #include <cstdint>
 
 #define METATABLE "lua_opentracing_bridge.tracer"
@@ -263,6 +264,24 @@ int LuaTracer::inject(lua_State* L) noexcept {
   return lua_error(L);
 };
 
+int LuaTracer::binary_inject(lua_State* L) noexcept {
+  auto tracer = check_lua_tracer(L);
+  try {
+    auto& span_context = get_span_context(L, -1);
+    std::ostringstream oss;
+    auto was_successful = tracer->tracer_->Inject(span_context, oss);
+    if (!was_successful) {
+      throw std::runtime_error{"failed to inject span context: " +
+                               was_successful.error().message()};
+    }
+    lua_pushstring(L, oss.str().c_str());
+    return 1;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
 //------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
@@ -274,6 +293,7 @@ const LuaClassDescription LuaTracer::description = {
     {{"start_span", LuaTracer::start_span},
      {"text_map_inject", LuaTracer::inject<opentracing::TextMapWriter>},
      {"http_headers_inject", LuaTracer::inject<opentracing::HTTPHeadersWriter>},
+     {"binary_inject", LuaTracer::binary_inject},
      {"close", LuaTracer::close},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer

@@ -29,6 +29,8 @@ class LuaTracer {
   template <class Carrier>
   static int inject(lua_State* L) noexcept;
 
+  static int binary_inject(lua_State* L) noexcept;
+
   static int close(lua_State* L) noexcept;
 };
 }  // namespace lua_bridge_tracer
