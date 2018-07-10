@@ -1,16 +1,16 @@
 #include "lua_tracer.h"
 
-#include "dynamic_tracer.h"
-#include "lua_span_context.h"
-#include "lua_span.h"
 #include "carrier.h"
+#include "dynamic_tracer.h"
+#include "lua_span.h"
+#include "lua_span_context.h"
 #include "utility.h"
 
 #include <opentracing/dynamic_load.h>
 
-#include <stdexcept>
-#include <sstream>
 #include <cstdint>
+#include <sstream>
+#include <stdexcept>
 
 #define METATABLE "lua_opentracing_bridge.tracer"
 
@@ -25,20 +25,17 @@ static LuaTracer* check_lua_tracer(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
-// compute_reference_type
+// get_reference_type
 //------------------------------------------------------------------------------
-static opentracing::SpanReferenceType compute_reference_type(
-    lua_State* L) {
+static opentracing::SpanReferenceType get_reference_type(lua_State* L) {
   if (lua_type(L, -1) != LUA_TSTRING) {
-      throw std::runtime_error{"reference_type must be string"};
+    throw std::runtime_error{"reference_type must be string"};
   }
   auto reference_type = opentracing::string_view{lua_tostring(L, -1)};
-  if (reference_type == "child_of" ||
-      reference_type == "CHILD_OF") {
+  if (reference_type == "child_of" || reference_type == "CHILD_OF") {
     return opentracing::SpanReferenceType::ChildOfRef;
   }
-  if (reference_type == "follows_from" ||
-      reference_type == "FOLLOWS_FROM") {
+  if (reference_type == "follows_from" || reference_type == "FOLLOWS_FROM") {
     return opentracing::SpanReferenceType::FollowsFromRef;
   }
   throw std::runtime_error{"invalid reference type: " +
@@ -48,7 +45,8 @@ static opentracing::SpanReferenceType compute_reference_type(
 //------------------------------------------------------------------------------
 // get_span_context
 //------------------------------------------------------------------------------
-static const opentracing::SpanContext& get_span_context(lua_State* L, int index) {
+static const opentracing::SpanContext& get_span_context(lua_State* L,
+                                                        int index) {
   void* user_data =
       luaL_checkudata(L, index, LuaSpanContext::description.metatable);
   if (user_data == nullptr) {
@@ -62,11 +60,12 @@ static const opentracing::SpanContext& get_span_context(lua_State* L, int index)
 }
 
 //------------------------------------------------------------------------------
-// compute_reference
+// get_reference
 //------------------------------------------------------------------------------
-static std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext*>
-compute_reference(lua_State* L) {
-  switch(lua_type(L, -1)) {
+static std::pair<opentracing::SpanReferenceType,
+                 const opentracing::SpanContext*>
+get_reference(lua_State* L) {
+  switch (lua_type(L, -1)) {
     case LUA_TTABLE:
       break;
     case LUA_TNIL:
@@ -82,7 +81,7 @@ compute_reference(lua_State* L) {
 
   lua_pushinteger(L, 1);
   lua_gettable(L, -2);
-  auto reference_type = compute_reference_type(L);
+  auto reference_type = get_reference_type(L);
   lua_pop(L, 1);
 
   lua_pushinteger(L, 2);
@@ -94,12 +93,12 @@ compute_reference(lua_State* L) {
 }
 
 //------------------------------------------------------------------------------
-// compute_references
+// get_references
 //------------------------------------------------------------------------------
 static std::vector<
     std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext*>>
-compute_references(lua_State* L) {
-  switch(lua_type(L, -1)) {
+get_references(lua_State* L) {
+  switch (lua_type(L, -1)) {
     case LUA_TTABLE:
       break;
     case LUA_TNIL:
@@ -114,10 +113,10 @@ compute_references(lua_State* L) {
 
   auto num_references = luaL_len(L, -1);
   result.reserve(num_references);
-  for (int i=1; i<num_references+1; ++i) {
+  for (int i = 1; i < num_references + 1; ++i) {
     lua_pushinteger(L, i);
     lua_gettable(L, -2);
-    result.push_back(compute_reference(L));
+    result.push_back(get_reference(L));
     lua_pop(L, 1);
   }
 
@@ -125,10 +124,27 @@ compute_references(lua_State* L) {
 }
 
 //------------------------------------------------------------------------------
-// compute_start_span_options
+// get_tags
 //------------------------------------------------------------------------------
-static opentracing::StartSpanOptions compute_start_span_options(lua_State* L,
-                                                                int index) {
+static std::vector<std::pair<std::string, opentracing::Value>> get_tags(
+    lua_State* L) {
+  switch (lua_type(L, -1)) {
+    case LUA_TTABLE:
+      break;
+    case LUA_TNIL:
+    case LUA_TNONE:
+      return {};
+    default:
+      throw std::runtime_error{"tags must be a table"};
+  }
+  return to_key_values(L, -1);
+}
+
+//------------------------------------------------------------------------------
+// get_start_span_options
+//------------------------------------------------------------------------------
+static opentracing::StartSpanOptions get_start_span_options(lua_State* L,
+                                                            int index) {
   opentracing::StartSpanOptions result;
 
   lua_getfield(L, index, "start_time");
@@ -136,7 +152,11 @@ static opentracing::StartSpanOptions compute_start_span_options(lua_State* L,
   lua_pop(L, 1);
 
   lua_getfield(L, index, "references");
-  result.references = compute_references(L);
+  result.references = get_references(L);
+  lua_pop(L, 1);
+
+  lua_getfield(L, index, "tags");
+  result.tags = get_tags(L);
   lua_pop(L, 1);
 
   return result;
@@ -191,7 +211,7 @@ int LuaTracer::start_span(lua_State* L) noexcept {
   try {
     opentracing::StartSpanOptions start_span_options;
     if (num_arguments >= 3) {
-      start_span_options = compute_start_span_options(L, -2);
+      start_span_options = get_start_span_options(L, -2);
     }
     auto span = tracer->tracer_->StartSpanWithOptions(operation_name,
                                                       start_span_options);
@@ -277,7 +297,8 @@ int LuaTracer::extract(lua_State* L) noexcept {
   try {
     lua_pushvalue(L, -2);
     LuaCarrierReader reader{L};
-    auto span_context_maybe = tracer->tracer_->Extract(static_cast<const Carrier&>(reader));
+    auto span_context_maybe =
+        tracer->tracer_->Extract(static_cast<const Carrier&>(reader));
     lua_pop(L, 1);
     if (!span_context_maybe) {
       throw std::runtime_error{"failed to inject span context: " +
@@ -288,7 +309,6 @@ int LuaTracer::extract(lua_State* L) noexcept {
       lua_pushnil(L);
       return 1;
     }
-
 
     *userdata = new LuaSpanContext{std::move(span_context)};
     luaL_getmetatable(L, LuaSpanContext::description.metatable);
@@ -343,7 +363,8 @@ const LuaClassDescription LuaTracer::description = {
      {"http_headers_inject", LuaTracer::inject<opentracing::HTTPHeadersWriter>},
      {"binary_inject", LuaTracer::binary_inject},
      {"text_map_extract", LuaTracer::extract<opentracing::TextMapReader>},
-     {"http_headers_extract", LuaTracer::extract<opentracing::HTTPHeadersReader>},
+     {"http_headers_extract",
+      LuaTracer::extract<opentracing::HTTPHeadersReader>},
      {"binary_extract", LuaTracer::binary_extract},
      {"close", LuaTracer::close},
      {nullptr, nullptr}}};

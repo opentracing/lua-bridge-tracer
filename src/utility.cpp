@@ -43,7 +43,7 @@ opentracing::Value to_value(lua_State* L, int index) {
         return static_cast<bool>(lua_toboolean(L, index));
       }
       case LUA_TTABLE: {
-        return to_dictionary_value(L, -1);
+        return to_dictionary_value(L, index);
       }
       case LUA_TNIL:
       case LUA_TNONE: {
@@ -70,9 +70,9 @@ opentracing::Value to_dictionary_value(lua_State* L, int index) {
 std::vector<std::pair<std::string, opentracing::Value>> to_key_values(
     lua_State* L, int index) {
   lua_pushvalue(L, index);
-  lua_pushnil(L);
   std::vector<std::pair<std::string, opentracing::Value>> result;
   result.reserve(luaL_len(L, index));
+  lua_pushnil(L);
   while (lua_next(L, -2)) {
     // ignore if the key isn't a string
     if (!lua_isstring(L, -2)) {
@@ -86,6 +86,7 @@ std::vector<std::pair<std::string, opentracing::Value>> to_key_values(
     result.emplace_back(key, value);
     lua_pop(L, 2);
   }
+  lua_pop(L, 1);
   return result;
 }
 }  // namespace lua_bridge_tracer
