@@ -55,6 +55,43 @@ int LuaSpan::context(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// set_tag
+//------------------------------------------------------------------------------
+int LuaSpan::set_tag(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  size_t key_len;
+  auto key_data = luaL_checklstring(L, -2, &key_len);
+  try {
+    opentracing::string_view key{key_data, key_len};
+    switch (lua_type(L, -1)) {
+      case LUA_TNUMBER: {
+        auto value = static_cast<double>(lua_tonumber(L, -1));
+        span->span_->SetTag(key, value);
+        break;
+      }
+      case LUA_TSTRING: {
+        size_t value_len;
+        auto value_data = lua_tolstring(L, -1, &value_len);
+        std::string value{value_data, value_len};
+        span->span_->SetTag(key, std::move(value));
+        break;
+      }
+      case LUA_TNIL:
+      case LUA_TNONE: {
+        span->span_->SetTag(key, nullptr);
+        break;
+      }
+      default:
+        throw std::runtime_error{"invalid set_tag type"};
+    }
+    return 0;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+//------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaSpan::description = {
@@ -64,5 +101,6 @@ const LuaClassDescription LuaSpan::description = {
     {{nullptr, nullptr}},
     {{"context", LuaSpan::context},
      {"finish", LuaSpan::finish},
+     {"set_tag", LuaSpan::set_tag},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
