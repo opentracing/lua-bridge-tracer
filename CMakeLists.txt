@@ -12,6 +12,7 @@ include_directories(SYSTEM ${LUA_INCLUDE_DIR})
 add_library(opentracing_bridge_tracer SHARED src/module.cpp
                                              src/dynamic_tracer.cpp
                                              src/lua_tracer.cpp
+                                             src/carrier.cpp
                                              src/lua_span_context.cpp
                                              src/lua_span.cpp)
 target_link_libraries(opentracing_bridge_tracer ${LUA_LIBRARIES}

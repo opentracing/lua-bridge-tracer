@@ -3,6 +3,7 @@
 #include "dynamic_tracer.h"
 #include "lua_span_context.h"
 #include "lua_span.h"
+#include "carrier.h"
 
 #include <opentracing/dynamic_load.h>
 
@@ -63,11 +64,11 @@ static opentracing::SpanReferenceType compute_reference_type(
 }
 
 //------------------------------------------------------------------------------
-// compute_span_context
+// get_span_context
 //------------------------------------------------------------------------------
-static const opentracing::SpanContext* compute_span_context(lua_State* L) {
+static const opentracing::SpanContext& get_span_context(lua_State* L, int index) {
   void* user_data =
-      luaL_checkudata(L, -1, LuaSpanContext::description.metatable);
+      luaL_checkudata(L, index, LuaSpanContext::description.metatable);
   if (user_data == nullptr) {
     throw std::runtime_error{
         "span_context must be of type " +
@@ -75,7 +76,7 @@ static const opentracing::SpanContext* compute_span_context(lua_State* L) {
   }
 
   auto span_context = *static_cast<LuaSpanContext**>(user_data);
-  return &span_context->span_context();
+  return span_context->span_context();
 }
 
 //------------------------------------------------------------------------------
@@ -104,16 +105,17 @@ compute_reference(lua_State* L) {
 
   lua_pushinteger(L, 2);
   lua_gettable(L, -2);
-  auto span_context = compute_span_context(L);
+  auto& span_context = get_span_context(L, -1);
   lua_pop(L, 1);
 
-  return {reference_type, span_context};
+  return {reference_type, &span_context};
 }
 
 //------------------------------------------------------------------------------
 // compute_references
 //------------------------------------------------------------------------------
-static std::vector<std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext*>>
+static std::vector<
+    std::pair<opentracing::SpanReferenceType, const opentracing::SpanContext*>>
 compute_references(lua_State* L) {
   switch(lua_type(L, -1)) {
     case LUA_TTABLE:
@@ -239,6 +241,29 @@ int LuaTracer::close(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// inject
+//------------------------------------------------------------------------------
+template <class Carrier>
+int LuaTracer::inject(lua_State* L) noexcept {
+  auto tracer = check_lua_tracer(L);
+  luaL_checktype(L, -1, LUA_TTABLE);
+  try {
+    auto& span_context = get_span_context(L, -2);
+    LuaCarrierWriter writer{L};
+    auto was_successful = tracer->tracer_->Inject(
+        span_context, static_cast<const Carrier&>(writer));
+    if (!was_successful) {
+      throw std::runtime_error{"failed to inject span context: " +
+                               was_successful.error().message()};
+    }
+    return 0;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+};
+
+//------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaTracer::description = {
@@ -247,6 +272,8 @@ const LuaClassDescription LuaTracer::description = {
     LuaTracer::free,
     {{"new", LuaTracer::new_lua_tracer}, {nullptr, nullptr}},
     {{"start_span", LuaTracer::start_span},
+     {"text_map_inject", LuaTracer::inject<opentracing::TextMapWriter>},
+     {"http_headers_inject", LuaTracer::inject<opentracing::HTTPHeadersWriter>},
      {"close", LuaTracer::close},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
