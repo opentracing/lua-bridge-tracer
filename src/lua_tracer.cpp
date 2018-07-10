@@ -4,6 +4,7 @@
 #include "lua_span_context.h"
 #include "lua_span.h"
 #include "carrier.h"
+#include "utility.h"
 
 #include <opentracing/dynamic_load.h>
 
@@ -21,26 +22,6 @@ static LuaTracer* check_lua_tracer(lua_State* L) noexcept {
   void* user_data = luaL_checkudata(L, 1, METATABLE);
   luaL_argcheck(L, user_data != NULL, 1, "`" METATABLE "' expected");
   return *static_cast<LuaTracer**>(user_data);
-}
-
-//------------------------------------------------------------------------------
-// compute_start_time
-//------------------------------------------------------------------------------
-static std::chrono::system_clock::time_point compute_start_time(lua_State* L) {
-  using SystemClock = std::chrono::system_clock;
-  switch (lua_type(L, -1)) {
-    case LUA_TNUMBER:
-      break;
-    case LUA_TNIL:
-    case LUA_TNONE:
-      return {};
-    default:
-      throw std::runtime_error{"start_time must be a number"};
-  }
-  auto time_since_epoch =
-      std::chrono::microseconds{static_cast<uint64_t>(lua_tonumber(L, -1))};
-  return SystemClock::from_time_t(std::time_t(0)) +
-         std::chrono::duration_cast<SystemClock::duration>(time_since_epoch);
 }
 
 //------------------------------------------------------------------------------
@@ -148,11 +129,10 @@ compute_references(lua_State* L) {
 //------------------------------------------------------------------------------
 static opentracing::StartSpanOptions compute_start_span_options(lua_State* L,
                                                                 int index) {
-  auto top = lua_gettop(L);
   opentracing::StartSpanOptions result;
 
   lua_getfield(L, index, "start_time");
-  result.start_system_timestamp = compute_start_time(L);
+  result.start_system_timestamp = convert_timestamp(L, -1);
   lua_pop(L, 1);
 
   lua_getfield(L, index, "references");

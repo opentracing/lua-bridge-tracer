@@ -1,6 +1,7 @@
 #include "lua_span.h"
 
 #include "lua_span_context.h"
+#include "utility.h"
 
 #define METATABLE "lua_opentracing_bridge.span"
 
@@ -12,6 +13,22 @@ static LuaSpan* check_lua_span(lua_State* L) noexcept {
   void* user_data = luaL_checkudata(L, 1, METATABLE);
   luaL_argcheck(L, user_data != NULL, 1, "`" METATABLE "' expected");
   return *static_cast<LuaSpan**>(user_data);
+}
+
+//------------------------------------------------------------------------------
+// compute_finish_span_options
+//------------------------------------------------------------------------------
+static opentracing::FinishSpanOptions compute_finish_span_options(lua_State* L,
+                                                                int index) {
+  opentracing::FinishSpanOptions result;
+
+  lua_getfield(L, index, "finish_time");
+  result.finish_steady_timestamp =
+      opentracing::convert_time_point<opentracing::SteadyClock>(
+          convert_timestamp(L, -1));
+  lua_pop(L, 1);
+
+  return result;
 }
 
 //------------------------------------------------------------------------------
@@ -28,8 +45,21 @@ int LuaSpan::free(lua_State* L) noexcept {
 //------------------------------------------------------------------------------
 int LuaSpan::finish(lua_State* L) noexcept {
   auto span = check_lua_span(L);
-  span->span_->Finish();
-  return 0;
+  auto num_arguments = lua_gettop(L);
+  if (num_arguments >= 2) {
+    luaL_checktype(L, 2, LUA_TTABLE);
+  }
+  try {
+    opentracing::FinishSpanOptions finish_span_options;
+    if (num_arguments >= 2) {
+      finish_span_options = compute_finish_span_options(L, 2);
+    }
+    span->span_->FinishWithOptions(finish_span_options);
+    return 0;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
 }
 
 //------------------------------------------------------------------------------

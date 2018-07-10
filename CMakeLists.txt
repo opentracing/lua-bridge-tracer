@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 11)
 include_directories(SYSTEM ${LUA_INCLUDE_DIR})
 
 add_library(opentracing_bridge_tracer SHARED src/module.cpp
+                                             src/utility.cpp
                                              src/dynamic_tracer.cpp
                                              src/lua_tracer.cpp
                                              src/carrier.cpp
