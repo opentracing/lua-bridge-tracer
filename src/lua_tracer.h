@@ -34,6 +34,8 @@ class LuaTracer {
   template <class Carrier>
   static int extract(lua_State* L) noexcept;
 
+  static int binary_extract(lua_State* L) noexcept;
+
   static int close(lua_State* L) noexcept;
 };
 }  // namespace lua_bridge_tracer

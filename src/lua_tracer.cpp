@@ -321,6 +321,35 @@ int LuaTracer::extract(lua_State* L) noexcept {
   return lua_error(L);
 }
 
+int LuaTracer::binary_extract(lua_State* L) noexcept {
+  auto tracer = check_lua_tracer(L);
+  auto s = luaL_checkstring(L, -1);
+  auto userdata = static_cast<LuaSpanContext**>(
+      lua_newuserdata(L, sizeof(LuaSpanContext*)));
+  try {
+    std::istringstream iss{s};
+    auto span_context_maybe = tracer->tracer_->Extract(iss);
+    if (!span_context_maybe) {
+      throw std::runtime_error{"failed to inject span context: " +
+                               span_context_maybe.error().message()};
+    }
+    auto span_context = std::move(*span_context_maybe);
+    if (span_context == nullptr) {
+      lua_pushnil(L);
+      return 1;
+    }
+
+    *userdata = new LuaSpanContext{std::move(span_context)};
+    luaL_getmetatable(L, LuaSpanContext::description.metatable);
+    lua_setmetatable(L, -2);
+
+    return 1;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
 //------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
@@ -335,6 +364,7 @@ const LuaClassDescription LuaTracer::description = {
      {"binary_inject", LuaTracer::binary_inject},
      {"text_map_extract", LuaTracer::extract<opentracing::TextMapReader>},
      {"http_headers_extract", LuaTracer::extract<opentracing::HTTPHeadersReader>},
+     {"binary_extract", LuaTracer::binary_extract},
      {"close", LuaTracer::close},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
