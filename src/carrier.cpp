@@ -36,6 +36,11 @@ opentracing::expected<void> LuaCarrierReader::ForeachKey(
         f) const {
   lua_pushnil(lua_state_);
   while (lua_next(lua_state_, -2)) {
+    // ignore if the key or value isn't a string
+    if (!lua_isstring(lua_state_, -1) || !lua_isstring(lua_state_, -2)) {
+      lua_pop(lua_state_, 1);
+      continue;
+    }
     lua_pushvalue(lua_state_, -2);
     size_t key_len, value_len;
     auto key = lua_tolstring(lua_state_, -1, &key_len);

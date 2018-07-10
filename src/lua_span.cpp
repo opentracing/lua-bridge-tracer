@@ -54,6 +54,7 @@ int LuaSpan::finish(lua_State* L) noexcept {
     if (num_arguments >= 2) {
       finish_span_options = compute_finish_span_options(L, 2);
     }
+    finish_span_options.log_records = std::move(span->log_records_);
     span->span_->FinishWithOptions(finish_span_options);
     return 0;
   } catch (const std::exception& e) {
@@ -93,27 +94,23 @@ int LuaSpan::set_tag(lua_State* L) noexcept {
   auto key_data = luaL_checklstring(L, -2, &key_len);
   try {
     opentracing::string_view key{key_data, key_len};
-    switch (lua_type(L, -1)) {
-      case LUA_TNUMBER: {
-        auto value = static_cast<double>(lua_tonumber(L, -1));
-        span->span_->SetTag(key, value);
-        break;
-      }
-      case LUA_TSTRING: {
-        size_t value_len;
-        auto value_data = lua_tolstring(L, -1, &value_len);
-        std::string value{value_data, value_len};
-        span->span_->SetTag(key, std::move(value));
-        break;
-      }
-      case LUA_TNIL:
-      case LUA_TNONE: {
-        span->span_->SetTag(key, nullptr);
-        break;
-      }
-      default:
-        throw std::runtime_error{"invalid set_tag type"};
-    }
+    auto value = to_value(L, -1);
+    span->span_->SetTag(key, std::move(value));
+    return 0;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+int LuaSpan::log(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  luaL_checktype(L, -1, LUA_TTABLE);
+  try {
+    opentracing::LogRecord log_record;
+    log_record.timestamp = std::chrono::system_clock::now();
+    log_record.fields = to_key_values(L, -1);
+    span->log_records_.push_back(log_record);
     return 0;
   } catch (const std::exception& e) {
     lua_pushstring(L, e.what());
@@ -132,5 +129,6 @@ const LuaClassDescription LuaSpan::description = {
     {{"context", LuaSpan::context},
      {"finish", LuaSpan::finish},
      {"set_tag", LuaSpan::set_tag},
+     {"log", LuaSpan::log},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
