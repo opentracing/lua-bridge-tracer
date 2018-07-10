@@ -264,6 +264,9 @@ int LuaTracer::inject(lua_State* L) noexcept {
   return lua_error(L);
 };
 
+//------------------------------------------------------------------------------
+// binary_inject
+//------------------------------------------------------------------------------
 int LuaTracer::binary_inject(lua_State* L) noexcept {
   auto tracer = check_lua_tracer(L);
   try {
@@ -283,6 +286,42 @@ int LuaTracer::binary_inject(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// extract
+//------------------------------------------------------------------------------
+template <class Carrier>
+int LuaTracer::extract(lua_State* L) noexcept {
+  auto tracer = check_lua_tracer(L);
+  luaL_checktype(L, -1, LUA_TTABLE);
+  auto userdata = static_cast<LuaSpanContext**>(
+      lua_newuserdata(L, sizeof(LuaSpanContext*)));
+  try {
+    lua_pushvalue(L, -2);
+    LuaCarrierReader reader{L};
+    auto span_context_maybe = tracer->tracer_->Extract(static_cast<const Carrier&>(reader));
+    lua_pop(L, 1);
+    if (!span_context_maybe) {
+      throw std::runtime_error{"failed to inject span context: " +
+                               span_context_maybe.error().message()};
+    }
+    auto span_context = std::move(*span_context_maybe);
+    if (span_context == nullptr) {
+      lua_pushnil(L);
+      return 1;
+    }
+
+
+    *userdata = new LuaSpanContext{std::move(span_context)};
+    luaL_getmetatable(L, LuaSpanContext::description.metatable);
+    lua_setmetatable(L, -2);
+
+    return 1;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+//------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaTracer::description = {
@@ -294,6 +333,8 @@ const LuaClassDescription LuaTracer::description = {
      {"text_map_inject", LuaTracer::inject<opentracing::TextMapWriter>},
      {"http_headers_inject", LuaTracer::inject<opentracing::HTTPHeadersWriter>},
      {"binary_inject", LuaTracer::binary_inject},
+     {"text_map_extract", LuaTracer::extract<opentracing::TextMapReader>},
+     {"http_headers_extract", LuaTracer::extract<opentracing::HTTPHeadersReader>},
      {"close", LuaTracer::close},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
