@@ -25,5 +25,9 @@ class LuaSpan {
   static int set_tag(lua_State* L) noexcept;
 
   static int log_kv(lua_State* L) noexcept;
+
+  static int set_baggage_item(lua_State* L) noexcept;
+
+  static int get_baggage_item(lua_State* L) noexcept;
 };
 }  // namespace lua_bridge_tracer

@@ -117,6 +117,40 @@ int LuaSpan::log_kv(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// set_baggage_item
+//------------------------------------------------------------------------------
+int LuaSpan::set_baggage_item(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  size_t key_len;
+  auto key_data = luaL_checklstring(L, 2, &key_len);
+  size_t value_len;
+  auto value_data = luaL_checklstring(L, 3, &key_len);
+  try {
+    span->span_->SetBaggageItem({key_data, key_len}, {value_data, value_len});
+  } catch(const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+//------------------------------------------------------------------------------
+// get_baggage_item
+//------------------------------------------------------------------------------
+int LuaSpan::get_baggage_item(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  size_t key_len;
+  auto key_data = luaL_checklstring(L, 2, &key_len);
+  try {
+    auto baggage_item = span->span_->BaggageItem({key_data, key_len});
+    lua_pushstring(L, baggage_item.c_str());
+    return 1;
+  } catch(const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+//------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaSpan::description = {
@@ -126,5 +160,7 @@ const LuaClassDescription LuaSpan::description = {
      {"finish", LuaSpan::finish},
      {"set_tag", LuaSpan::set_tag},
      {"log_kv", LuaSpan::log_kv},
+     {"set_baggage_item", LuaSpan::set_baggage_item},
+     {"get_baggage_item", LuaSpan::get_baggage_item},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
