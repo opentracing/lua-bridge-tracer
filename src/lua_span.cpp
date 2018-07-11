@@ -122,10 +122,8 @@ int LuaSpan::log(lua_State* L) noexcept {
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaSpan::description = {
-    nullptr,
     METATABLE,
     LuaSpan::free,
-    {{nullptr, nullptr}},
     {{"context", LuaSpan::context},
      {"finish", LuaSpan::finish},
      {"set_tag", LuaSpan::set_tag},

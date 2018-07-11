@@ -17,10 +17,10 @@ class LuaTracer {
    {}
 
   static const LuaClassDescription description;
+  static int new_lua_tracer(lua_State* L) noexcept;
  private:
   std::shared_ptr<opentracing::Tracer> tracer_;
 
-  static int new_lua_tracer(lua_State* L) noexcept;
 
   static int free(lua_State* L) noexcept;
 

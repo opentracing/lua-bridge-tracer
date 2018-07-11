@@ -23,9 +23,6 @@ int LuaSpanContext::free(lua_State* L) noexcept {
 //------------------------------------------------------------------------------
 // description
 //------------------------------------------------------------------------------
-const LuaClassDescription LuaSpanContext::description = {nullptr,
-                                                         METATABLE,
-                                                         LuaSpanContext::free,
-                                                         {{nullptr, nullptr}},
-                                                         {{nullptr, nullptr}}};
+const LuaClassDescription LuaSpanContext::description = {
+    METATABLE, LuaSpanContext::free, {{nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer

@@ -354,10 +354,8 @@ int LuaTracer::binary_extract(lua_State* L) noexcept {
 // description
 //------------------------------------------------------------------------------
 const LuaClassDescription LuaTracer::description = {
-    "bridge_tracer",
     METATABLE,
     LuaTracer::free,
-    {{"new", LuaTracer::new_lua_tracer}, {nullptr, nullptr}},
     {{"start_span", LuaTracer::start_span},
      {"text_map_inject", LuaTracer::inject<opentracing::TextMapWriter>},
      {"http_headers_inject", LuaTracer::inject<opentracing::HTTPHeadersWriter>},
