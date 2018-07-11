@@ -19,7 +19,7 @@ static LuaSpan* check_lua_span(lua_State* L) noexcept {
 // get_finish_span_options
 //------------------------------------------------------------------------------
 static opentracing::FinishSpanOptions get_finish_span_options(lua_State* L,
-                                                                int index) {
+                                                              int index) {
   opentracing::FinishSpanOptions result;
 
   result.finish_steady_timestamp =
@@ -101,7 +101,7 @@ int LuaSpan::set_tag(lua_State* L) noexcept {
   return lua_error(L);
 }
 
-int LuaSpan::log(lua_State* L) noexcept {
+int LuaSpan::log_kv(lua_State* L) noexcept {
   auto span = check_lua_span(L);
   luaL_checktype(L, -1, LUA_TTABLE);
   try {
@@ -125,6 +125,6 @@ const LuaClassDescription LuaSpan::description = {
     {{"context", LuaSpan::context},
      {"finish", LuaSpan::finish},
      {"set_tag", LuaSpan::set_tag},
-     {"log", LuaSpan::log},
+     {"log_kv", LuaSpan::log_kv},
      {nullptr, nullptr}}};
 }  // namespace lua_bridge_tracer
