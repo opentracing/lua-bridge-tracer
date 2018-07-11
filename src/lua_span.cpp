@@ -16,17 +16,15 @@ static LuaSpan* check_lua_span(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
-// compute_finish_span_options
+// get_finish_span_options
 //------------------------------------------------------------------------------
-static opentracing::FinishSpanOptions compute_finish_span_options(lua_State* L,
+static opentracing::FinishSpanOptions get_finish_span_options(lua_State* L,
                                                                 int index) {
   opentracing::FinishSpanOptions result;
 
-  lua_getfield(L, index, "finish_time");
   result.finish_steady_timestamp =
       opentracing::convert_time_point<opentracing::SteadyClock>(
-          convert_timestamp(L, -1));
-  lua_pop(L, 1);
+          convert_timestamp(L, index));
 
   return result;
 }
@@ -47,12 +45,12 @@ int LuaSpan::finish(lua_State* L) noexcept {
   auto span = check_lua_span(L);
   auto num_arguments = lua_gettop(L);
   if (num_arguments >= 2) {
-    luaL_checktype(L, 2, LUA_TTABLE);
+    luaL_checknumber(L, 2);
   }
   try {
     opentracing::FinishSpanOptions finish_span_options;
     if (num_arguments >= 2) {
-      finish_span_options = compute_finish_span_options(L, 2);
+      finish_span_options = get_finish_span_options(L, 2);
     }
     finish_span_options.log_records = std::move(span->log_records_);
     span->span_->FinishWithOptions(finish_span_options);
