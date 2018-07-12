@@ -15,6 +15,5 @@ apt-get install --no-install-recommends --no-install-suggests -y \
                 ssh \
                 wget \
                 curl \
+                unzip \
                 libreadline6-dev
-./install_opentracing.sh
-./install_lua.sh

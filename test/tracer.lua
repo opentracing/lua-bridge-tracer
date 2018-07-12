@@ -1,5 +1,5 @@
 bridge_tracer = require 'opentracing_bridge_tracer'
-json = require 'json'
+json = require 'JSON'
 
 function new_mocktracer(json_file)
   mocktracer_path = os.getenv("MOCKTRACER")

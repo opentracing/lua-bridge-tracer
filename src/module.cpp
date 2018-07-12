@@ -8,7 +8,7 @@
 
 extern "C" {
 #include <lua.h>
-#include <lua/lauxlib.h>
+#include <lauxlib.h>
 }  // extern "C"
 
 static void setfuncs(lua_State* L, const luaL_Reg* l, int nup) {

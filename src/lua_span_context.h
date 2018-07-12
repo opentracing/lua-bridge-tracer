@@ -4,6 +4,8 @@
 
 #include <opentracing/span.h>
 
+#include <memory>
+
 namespace lua_bridge_tracer {
 class LuaSpanContext {
  public:
