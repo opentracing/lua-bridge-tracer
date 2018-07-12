@@ -16,10 +16,12 @@ if [[ "$1" == "test" ]]; then
   ./ci/install_opentracing.sh
   ./ci/install_lua.sh
   ./ci/install_rocks.sh
+  SRC_DIR=`pwd`
   mkdir /build && cd /build
-  cmake -DCMAKE_BUILD_TYPE=Debug /src
+  cmake -DCMAKE_BUILD_TYPE=Debug $SRC_DIR
   make && make install
   ldconfig
+  cd $SRC_DIR
   LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.4 busted test/tracer.lua
   exit 0
 fi
