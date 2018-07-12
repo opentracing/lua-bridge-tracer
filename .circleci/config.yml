@@ -1,0 +1,15 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: ./ci/setup_build_environment.sh
+      - run: ./ci/do_ci.sh test
+
+workflows:
+  version: 2
+  build_test_and_deploy:
+    jobs:
+      - test
