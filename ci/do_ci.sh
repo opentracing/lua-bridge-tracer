@@ -20,7 +20,6 @@ if [[ "$1" == "test" ]]; then
   cmake -DCMAKE_BUILD_TYPE=Debug /src
   make && make install
   ldconfig
-  cd /src/test
-  LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.4 busted tracer.lua
+  LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.4 busted test/tracer.lua
   exit 0
 fi
