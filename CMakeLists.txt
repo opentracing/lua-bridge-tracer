@@ -16,7 +16,12 @@ add_library(opentracing_bridge_tracer SHARED src/module.cpp
                                              src/carrier.cpp
                                              src/lua_span_context.cpp
                                              src/lua_span.cpp)
+
 target_link_libraries(opentracing_bridge_tracer ${LUA_LIBRARIES}
                                                 OpenTracing::opentracing)
 set_target_properties(opentracing_bridge_tracer PROPERTIES PREFIX "")
 set_target_properties(opentracing_bridge_tracer PROPERTIES SUFFIX ".so")
+
+set(LUA_MODULE_DIR ${CMAKE_INSTALL_PREFIX}/lib/lua/${LUA_VERSION_MAJOR}.${LUA_VERSION_MINOR})
+
+install(TARGETS opentracing_bridge_tracer LIBRARY DESTINATION ${LUA_MODULE_DIR})
