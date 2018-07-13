@@ -11,7 +11,8 @@ function setup_asan_flags()
 
 export MOCKTRACER=/usr/local/lib/libopentracing_mocktracer.so
 
-if [[ "$1" == "test" ]]; then
+function run_lua_test()
+{
   setup_asan_flags
   ./ci/install_opentracing.sh
   ./ci/install_lua.sh
@@ -23,5 +24,18 @@ if [[ "$1" == "test" ]]; then
   ldconfig
   cd $SRC_DIR
   LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.4 busted test/tracer.lua
+}
+
+if [[ "$1" == "test-5.3" ]]; then
+  export LUA_VERSION=5.3.4
+  run_lua_test
+  exit 0
+elif [[ "$1" == "test-5.2" ]]; then
+  export LUA_VERSION=5.2.4
+  run_lua_test
+  exit 0
+elif [[ "$1" == "test-5.1" ]]; then
+  export LUA_VERSION=5.1.5
+  run_lua_test
   exit 0
 fi

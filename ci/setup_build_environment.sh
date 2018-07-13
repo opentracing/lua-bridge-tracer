@@ -16,4 +16,5 @@ apt-get install --no-install-recommends --no-install-suggests -y \
                 wget \
                 curl \
                 unzip \
-                libreadline6-dev
+                libreadline6-dev \
+                libncurses5-dev

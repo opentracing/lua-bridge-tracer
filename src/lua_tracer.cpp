@@ -75,7 +75,7 @@ get_reference(lua_State* L) {
       throw std::runtime_error{"reference must be a table"};
   }
 
-  if (luaL_len(L, -1) != 2) {
+  if (get_table_len(L, -1) != 2) {
     throw std::runtime_error{"reference must contain 2 elements"};
   }
 
@@ -111,7 +111,7 @@ get_references(lua_State* L) {
                         const opentracing::SpanContext*>>
       result;
 
-  auto num_references = luaL_len(L, -1);
+  auto num_references = get_table_len(L, -1);
   result.reserve(num_references);
   for (int i = 1; i < num_references + 1; ++i) {
     lua_pushinteger(L, i);

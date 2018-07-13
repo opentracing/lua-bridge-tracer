@@ -4,6 +4,17 @@
 
 namespace lua_bridge_tracer {
 //------------------------------------------------------------------------------
+// get_table_length
+//------------------------------------------------------------------------------
+size_t get_table_len(lua_State* L, int index) {
+#if LUA_VERSION_NUM > 501
+  return lua_rawlen(L, index);
+#else
+  return lua_objlen(L, index);
+#endif
+}
+
+//------------------------------------------------------------------------------
 // convert_timestamp
 //------------------------------------------------------------------------------
 std::chrono::system_clock::time_point convert_timestamp(lua_State* L, int index) {
@@ -71,7 +82,7 @@ std::vector<std::pair<std::string, opentracing::Value>> to_key_values(
     lua_State* L, int index) {
   lua_pushvalue(L, index);
   std::vector<std::pair<std::string, opentracing::Value>> result;
-  result.reserve(luaL_len(L, index));
+  result.reserve(get_table_len(L, index));
   lua_pushnil(L);
   while (lua_next(L, -2)) {
     // ignore if the key isn't a string
