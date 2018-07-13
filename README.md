@@ -29,8 +29,8 @@ library = --[[ path to OpenTracing plugin ]]
 config = --[[ vendor specific JSON configuration for the tracer ]]
 tracer = bridge_tracer:new(library, config)
 
-# `tracer` conforms to the Lua OpenTracing API. See 
-# https://github.com/opentracing/opentracing-lua for API documentation.
+-- `tracer` conforms to the Lua OpenTracing API. See 
+-- https://github.com/opentracing/opentracing-lua for API documentation.
 ```
 
 See also [example/tutorial](example/tutorial).
