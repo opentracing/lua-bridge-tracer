@@ -200,6 +200,7 @@ int LuaTracer::free(lua_State* L) noexcept {
 // start_span
 //------------------------------------------------------------------------------
 int LuaTracer::start_span(lua_State* L) noexcept {
+  auto top = lua_gettop(L);
   auto tracer = check_lua_tracer(L);
   auto operation_name = luaL_checkstring(L, 2);
   auto num_arguments = lua_gettop(L);
@@ -227,6 +228,7 @@ int LuaTracer::start_span(lua_State* L) noexcept {
 
     return 1;
   } catch (const std::exception& e) {
+    lua_settop(L, top);
     lua_pushstring(L, e.what());
   }
   return lua_error(L);
@@ -246,6 +248,7 @@ int LuaTracer::close(lua_State* L) noexcept {
 //------------------------------------------------------------------------------
 template <class Carrier>
 int LuaTracer::inject(lua_State* L) noexcept {
+  auto top = lua_gettop(L);
   auto tracer = check_lua_tracer(L);
   luaL_checktype(L, -1, LUA_TTABLE);
   try {
@@ -259,6 +262,7 @@ int LuaTracer::inject(lua_State* L) noexcept {
     }
     return 0;
   } catch (const std::exception& e) {
+    lua_settop(L, top);
     lua_pushstring(L, e.what());
   }
   return lua_error(L);
@@ -290,6 +294,7 @@ int LuaTracer::binary_inject(lua_State* L) noexcept {
 //------------------------------------------------------------------------------
 template <class Carrier>
 int LuaTracer::extract(lua_State* L) noexcept {
+  auto top = lua_gettop(L);
   auto tracer = check_lua_tracer(L);
   luaL_checktype(L, -1, LUA_TTABLE);
   auto userdata = static_cast<LuaSpanContext**>(
@@ -316,6 +321,7 @@ int LuaTracer::extract(lua_State* L) noexcept {
 
     return 1;
   } catch (const std::exception& e) {
+    lua_settop(L, top);
     lua_pushstring(L, e.what());
   }
   return lua_error(L);

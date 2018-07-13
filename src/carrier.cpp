@@ -1,7 +1,5 @@
 #include "carrier.h"
 
-#include <iostream>
-
 namespace lua_bridge_tracer {
 //------------------------------------------------------------------------------
 // constructor
@@ -34,6 +32,7 @@ opentracing::expected<void> LuaCarrierReader::ForeachKey(
     std::function<opentracing::expected<void>(opentracing::string_view key,
                                               opentracing::string_view value)>
         f) const {
+  auto top = lua_gettop(lua_state_);
   lua_pushnil(lua_state_);
   while (lua_next(lua_state_, -2)) {
     // ignore if the key or value isn't a string
@@ -47,6 +46,7 @@ opentracing::expected<void> LuaCarrierReader::ForeachKey(
     auto value = lua_tolstring(lua_state_, -2, &value_len);
     auto was_successful = f({key, key_len}, {value, value_len});
     if (!was_successful) {
+      lua_settop(lua_state_, top);
       return was_successful;
     }
     lua_pop(lua_state_, 2);
