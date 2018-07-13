@@ -5,14 +5,15 @@
 #include <chrono>
 
 extern "C" {
-#include <lua.h>
 #include <lauxlib.h>
-} // extern "C"
+#include <lua.h>
+}  // extern "C"
 
 namespace lua_bridge_tracer {
 size_t get_table_len(lua_State* L, int index);
 
-std::chrono::system_clock::time_point convert_timestamp(lua_State* L, int index);
+std::chrono::system_clock::time_point convert_timestamp(lua_State* L,
+                                                        int index);
 
 opentracing::Value to_value(lua_State* L, int index);
 

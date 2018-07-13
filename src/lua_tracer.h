@@ -7,22 +7,21 @@
 #include <memory>
 
 extern "C" {
-#include <lua.h>
 #include <lauxlib.h>
-} // extern "C"
+#include <lua.h>
+}  // extern "C"
 
 namespace lua_bridge_tracer {
 class LuaTracer {
  public:
-   explicit LuaTracer(const std::shared_ptr<opentracing::Tracer>& tracer)
-     : tracer_{tracer}
-   {}
+  explicit LuaTracer(const std::shared_ptr<opentracing::Tracer>& tracer)
+      : tracer_{tracer} {}
 
   static const LuaClassDescription description;
   static int new_lua_tracer(lua_State* L) noexcept;
+
  private:
   std::shared_ptr<opentracing::Tracer> tracer_;
-
 
   static int free(lua_State* L) noexcept;
 

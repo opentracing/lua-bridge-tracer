@@ -3,9 +3,9 @@
 #include <initializer_list>
 
 extern "C" {
-#include <lua.h>
 #include <lauxlib.h>
-} // extern "C"
+#include <lua.h>
+}  // extern "C"
 
 namespace lua_bridge_tracer {
 struct LuaClassDescription {

@@ -24,7 +24,6 @@ opentracing::expected<void> LuaCarrierWriter::Set(
 LuaCarrierReader::LuaCarrierReader(lua_State* lua_state) noexcept
     : lua_state_{lua_state} {}
 
-
 //------------------------------------------------------------------------------
 // ForeachKey
 //------------------------------------------------------------------------------

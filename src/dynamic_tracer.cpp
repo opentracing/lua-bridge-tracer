@@ -12,7 +12,7 @@ namespace {
 class DynamicSpan : public opentracing::Span {
  public:
   DynamicSpan(std::shared_ptr<opentracing::Tracer> tracer,
-	      std::unique_ptr<opentracing::Span>&& span) noexcept
+              std::unique_ptr<opentracing::Span>&& span) noexcept
       : tracer_{tracer}, span_{std::move(span)} {}
 
  private:
@@ -20,7 +20,7 @@ class DynamicSpan : public opentracing::Span {
   std::unique_ptr<opentracing::Span> span_;
 
   void FinishWithOptions(const opentracing::FinishSpanOptions&
-			     finish_span_options) noexcept final {
+                             finish_span_options) noexcept final {
     span_->FinishWithOptions(finish_span_options);
   }
 
@@ -29,12 +29,12 @@ class DynamicSpan : public opentracing::Span {
   }
 
   void SetTag(opentracing::string_view key,
-	      const opentracing::Value& value) noexcept final {
+              const opentracing::Value& value) noexcept final {
     span_->SetTag(key, value);
   }
 
   void SetBaggageItem(opentracing::string_view restricted_key,
-		      opentracing::string_view value) noexcept final {
+                      opentracing::string_view value) noexcept final {
     span_->SetBaggageItem(restricted_key, value);
   }
 
@@ -44,8 +44,8 @@ class DynamicSpan : public opentracing::Span {
   }
 
   void Log(std::initializer_list<
-	   std::pair<opentracing::string_view, opentracing::Value>>
-	       fields) noexcept final {
+           std::pair<opentracing::string_view, opentracing::Value>>
+               fields) noexcept final {
     span_->Log(fields);
   }
 
@@ -124,9 +124,7 @@ class DynamicTracer : public opentracing::Tracer,
     return reader.Extract(*tracer_);
   }
 
-  void Close() noexcept final {
-    tracer_->Close();
-  }
+  void Close() noexcept final { tracer_->Close(); }
 };
 }  // namespace
 
@@ -134,7 +132,7 @@ class DynamicTracer : public opentracing::Tracer,
 // make_dynamic_tracer
 //------------------------------------------------------------------------------
 std::shared_ptr<opentracing::Tracer> load_tracer(const char* library_name,
-						 const char* config) {
+                                                 const char* config) {
   std::string error_message;
   auto handle_maybe =
       opentracing::DynamicallyLoadTracingLibrary(library_name, error_message);
@@ -147,6 +145,6 @@ std::shared_ptr<opentracing::Tracer> load_tracer(const char* library_name,
     throw std::runtime_error{error_message};
   }
   return std::make_shared<DynamicTracer>(std::move(handle),
-					 std::move(*tracer_maybe));
+                                         std::move(*tracer_maybe));
 }
 }  // namespace lua_bridge_tracer
