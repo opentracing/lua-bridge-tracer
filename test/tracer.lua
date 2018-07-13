@@ -42,7 +42,36 @@ describe("in bridge_tracer", function()
       assert.is_true(json[1]["duration"] > 1.0e6)
     end)
 
-    it("it supports context propagation", function()
+    it("errors when passed an incorrect operation name", function()
+      json_file = os.tmpname()
+      tracer = new_mocktracer(json_file)
+      local errorfn = function()
+        span = tracer:start_span({})
+      end
+      assert.has_error(errorfn)
+    end)
+  end)
+
+  describe("a tracer", function()
+    it("returns nil when extracting from an empty table", function()
+      json_file = os.tmpname()
+      tracer = new_mocktracer(json_file)
+      -- text map
+      context1 = tracer:text_map_extract({})
+      assert.are.equal(context1, nil)
+
+      -- http headers
+      context2 = tracer:http_headers_extract({})
+      assert.are.equal(context2, nil)
+
+      -- binary
+      context3 = tracer:binary_extract("")
+      assert.are.equal(context3, nil)
+    end)
+  end)
+
+  describe("a span", function()
+    it("supports context propagation", function()
       json_file = os.tmpname()
       tracer = new_mocktracer(json_file)
       span = tracer:start_span("abc")
@@ -56,8 +85,8 @@ describe("in bridge_tracer", function()
 
       -- http headers
       carrier2 = {}
-      tracer:text_map_inject(span:context(), carrier2)
-      context2 = tracer:text_map_extract(carrier2)
+      tracer:http_headers_inject(span:context(), carrier2)
+      context2 = tracer:http_headers_extract(carrier2)
       assert.are_not_equals(context2, nil)
 
       -- binary
@@ -82,13 +111,5 @@ describe("in bridge_tracer", function()
       collectgarbage()
     end)
 
-    it("errors when passed an incorrect operation name", function()
-      json_file = os.tmpname()
-      tracer = new_mocktracer(json_file)
-      local errorfn = function()
-        span = tracer:start_span({})
-      end
-      assert.has_error(errorfn)
-    end)
   end)
 end)
