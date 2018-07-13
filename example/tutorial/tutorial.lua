@@ -3,14 +3,14 @@ bridge_tracer = require 'opentracing_bridge_tracer'
 assert(#arg == 2)
 
 -- initialize a tracer
-library_name = arg[1]
+tracer_library = arg[1]
 config_file = arg[2]
 
 f = assert(io.open(config_file, "rb"))
 config = f:read("*all")
 f:close()
 
-tracer = bridge_tracer:new(library_name, config)
+tracer = bridge_tracer:new(tracer_library, config)
 
 parent_span = tracer:start_span("parent")
 
