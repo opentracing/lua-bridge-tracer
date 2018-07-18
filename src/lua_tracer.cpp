@@ -188,6 +188,31 @@ int LuaTracer::new_lua_tracer(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// new_lua_tracer_from_global
+//------------------------------------------------------------------------------
+int LuaTracer::new_lua_tracer_from_global(lua_State* L) noexcept {
+  auto userdata =
+      static_cast<LuaTracer**>(lua_newuserdata(L, sizeof(LuaTracer*)));
+  try {
+    auto ot_tracer = opentracing::Tracer::Global();
+    if (ot_tracer == nullptr) {
+      throw std::runtime_error{"opentracing::Global not initialized"};
+    }
+    auto tracer = std::unique_ptr<LuaTracer>{new LuaTracer{ot_tracer}};
+    *userdata = tracer.release();
+
+    // tag the metatable
+    luaL_getmetatable(L, description.metatable);
+    lua_setmetatable(L, -2);
+
+    return 1;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+//------------------------------------------------------------------------------
 // free
 //------------------------------------------------------------------------------
 int LuaTracer::free(lua_State* L) noexcept {

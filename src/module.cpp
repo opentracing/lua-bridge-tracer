@@ -49,6 +49,8 @@ extern "C" int luaopen_opentracing_bridge_tracer(lua_State* L) {
   lua_newtable(L);
   const struct luaL_Reg functions[] = {
       {"new", lua_bridge_tracer::LuaTracer::new_lua_tracer},
+      {"new_from_global",
+       lua_bridge_tracer::LuaTracer::new_lua_tracer_from_global},
       {nullptr, nullptr}};
   setfuncs(L, functions, 0);
 
