@@ -50,6 +50,18 @@ describe("in bridge_tracer", function()
       end
       assert.has_error(errorfn)
     end)
+
+    it("ignore nil references", function()
+      json_file = os.tmpname()
+      tracer = new_mocktracer(json_file)
+      span = tracer:start_span("abc", {["references"] = {{"child_of", nil}}})
+      span:finish()
+      tracer:close()
+			json = read_json(json_file)
+			assert.are.equal(#json, 1)
+      references = json[1]["references"]
+			assert.are.equal(#references, 0)
+    end);
   end)
 
   describe("a tracer", function()

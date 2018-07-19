@@ -68,14 +68,18 @@ get_reference(lua_State* L) {
   switch (lua_type(L, -1)) {
     case LUA_TTABLE:
       break;
-    case LUA_TNIL:
-    case LUA_TNONE:
-      return {};
     default:
       throw std::runtime_error{"reference must be a table"};
   }
 
-  if (get_table_len(L, -1) != 2) {
+  auto table_len = get_table_len(L, -1);
+
+  // Could be a nil reference so ignore
+  if (table_len == 1) {
+    return {opentracing::SpanReferenceType::ChildOfRef, nullptr};
+  }
+
+  if (table_len != 2) {
     throw std::runtime_error{"reference must contain 2 elements"};
   }
 
@@ -86,6 +90,7 @@ get_reference(lua_State* L) {
 
   lua_pushinteger(L, 2);
   lua_gettable(L, -2);
+
   auto& span_context = get_span_context(L, -1);
   lua_pop(L, 1);
 
@@ -354,11 +359,12 @@ int LuaTracer::extract(lua_State* L) noexcept {
 
 int LuaTracer::binary_extract(lua_State* L) noexcept {
   auto tracer = check_lua_tracer(L);
-  auto s = luaL_checkstring(L, -1);
+  size_t context_len;
+  auto context_data = luaL_checklstring(L, -1, &context_len);
   auto userdata = static_cast<LuaSpanContext**>(
       lua_newuserdata(L, sizeof(LuaSpanContext*)));
   try {
-    std::istringstream iss{s};
+    std::istringstream iss{std::string{context_data, context_len}};
     auto span_context_maybe = tracer->tracer_->Extract(iss);
     if (!span_context_maybe) {
       throw std::runtime_error{"failed to inject span context: " +
