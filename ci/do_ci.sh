@@ -38,4 +38,22 @@ elif [[ "$1" == "test-5.1" ]]; then
   export LUA_VERSION=5.1.5
   run_lua_test
   exit 0
+elif [[ "$1" == "coverage" ]]; then
+  export LUA_VERSION=5.1.5
+  ./ci/install_opentracing.sh
+  ./ci/install_lua.sh
+  ./ci/install_rocks.sh
+  SRC_DIR=`pwd`
+  mkdir /build && cd /build
+  cmake -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage -fPIC -O0" \
+    $SRC_DIR
+  make && make install
+  ldconfig
+  cd $SRC_DIR
+  busted test/tracer.lua
+  cd /build/CMakeFiles/opentracing_bridge_tracer.dir/src
+  gcovr -r /src/src . --html --html-details -o coverage.html
+  mkdir /coverage
+  cp *.html /coverage/
 fi

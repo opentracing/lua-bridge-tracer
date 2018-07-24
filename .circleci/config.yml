@@ -24,6 +24,17 @@ jobs:
       - run: ./ci/setup_build_environment.sh
       - run: ./ci/do_ci.sh test-5.3
 
+  coverage:
+    docker:
+      - image: ubuntu:18.04
+    steps:
+      - checkout
+      - run: ./ci/setup_build_environment.sh
+      - run: ./ci/do_ci.sh coverage
+      - store_artifacts:
+          path: /coverage
+          desination: coverage
+
 workflows:
   version: 2
   build_test_and_deploy:
@@ -31,3 +42,4 @@ workflows:
       - test-lua5.1
       - test-lua5.2
       - test-lua5.3
+      - coverage
