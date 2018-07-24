@@ -53,7 +53,7 @@ elif [[ "$1" == "coverage" ]]; then
   cd $SRC_DIR
   busted test/tracer.lua
   cd /build/CMakeFiles/opentracing_bridge_tracer.dir/src
-  gcovr -r $SRC_DIR/src --html --html-details -o coverage.html
+  gcovr -r $SRC_DIR/src . --html --html-details -o coverage.html
   mkdir /coverage
   cp *.html /coverage/
 fi
