@@ -11,6 +11,7 @@ extern "C" {
 #include <lua.h>
 }  // extern "C"
 
+// Copied from Lua 5.3 so that we can use it with Lua 5.1.
 static void setfuncs(lua_State* L, const luaL_Reg* l, int nup) {
   luaL_checkstack(L, nup + 1, "too many upvalues");
   for (; l->name != NULL; l++) { /* fill the table with given functions */

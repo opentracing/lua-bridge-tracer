@@ -131,6 +131,13 @@ class DynamicTracer : public opentracing::Tracer,
 //------------------------------------------------------------------------------
 // make_dynamic_tracer
 //------------------------------------------------------------------------------
+// Dynamically loads a C++ OpenTracing plugin and constructs a tracer with the
+// given configuration.
+//
+// The opentracing::DynamicTracingLibraryHandle returned can't be freed until
+// the opentracing::Tracer is freed. To accomplish this, we build a new
+// opentracing::Tracer that wraps the plugin's tracer and owns the
+// opentracing::DynamicTracingLibraryHandle.
 std::shared_ptr<opentracing::Tracer> load_tracer(const char* library_name,
                                                  const char* config) {
   std::string error_message;
