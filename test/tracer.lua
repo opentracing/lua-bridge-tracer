@@ -105,6 +105,12 @@ describe("in bridge_tracer", function()
       carrier3 = tracer:binary_inject(span:context())
       context3 = tracer:binary_extract(carrier3)
       assert.are_not_equals(context3, nil)
+
+      -- itnores non-string key-value pairs
+      carrier4 = {[1] = "abc", ["abc"] = 2.0}
+      tracer:text_map_inject(span:context(), carrier4)
+      context4 = tracer:text_map_extract(carrier4)
+      assert.are_not_equals(context4, nil)
     end)
 
     it("is correctly garbage collected", function()
