@@ -127,6 +127,7 @@ int LuaSpan::set_baggage_item(lua_State* L) noexcept {
   auto value_data = luaL_checklstring(L, 3, &value_len);
   try {
     span->span_->SetBaggageItem({key_data, key_len}, {value_data, value_len});
+    return 0;
   } catch (const std::exception& e) {
     lua_pushstring(L, e.what());
   }

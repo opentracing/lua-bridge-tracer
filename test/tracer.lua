@@ -159,7 +159,7 @@ describe("in bridge_tracer", function()
       tracer = new_mocktracer(json_file)
       span = tracer:start_span("abc")
       span:set_baggage_item("abc", "123")
-      assert.qre_equal(span:get_baggage_item("abc"), "123")
+      assert.are_equal(span:get_baggage_item("abc"), "123")
     end)
 
   end)
