@@ -45,13 +45,8 @@ int LuaSpan::set_operation_name(lua_State* L) noexcept {
   auto span = check_lua_span(L);
   size_t operation_name_len;
   auto operation_name_data = luaL_checklstring(L, -1, &operation_name_len);
-  try {
-    span->span_->SetOperationName({operation_name_data, operation_name_len});
-    return 0;
-  } catch (const std::exception& e) {
-    lua_pushstring(L, e.what());
-  }
-  return lua_error(L);
+  span->span_->SetOperationName({operation_name_data, operation_name_len});
+  return 0;
 }
 
 //------------------------------------------------------------------------------
