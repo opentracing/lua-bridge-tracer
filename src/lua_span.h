@@ -20,6 +20,8 @@ class LuaSpan {
 
   static int free(lua_State* L) noexcept;
 
+  static int set_operation_name(lua_State* L) noexcept;
+
   static int finish(lua_State* L) noexcept;
 
   static int context(lua_State* L) noexcept;

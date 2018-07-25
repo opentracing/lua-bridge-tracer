@@ -39,6 +39,22 @@ int LuaSpan::free(lua_State* L) noexcept {
 }
 
 //------------------------------------------------------------------------------
+// set_operation_name
+//------------------------------------------------------------------------------
+int LuaSpan::set_operation_name(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  size_t operation_name_len;
+  auto operation_name_data = luaL_checklstring(L, -1, &operation_name_len);
+  try {
+    span->span_->SetOperationName({operation_name_data, operation_name_len});
+    return 0;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
+}
+
+//------------------------------------------------------------------------------
 // finish
 //------------------------------------------------------------------------------
 int LuaSpan::finish(lua_State* L) noexcept {
@@ -158,6 +174,7 @@ const LuaClassDescription LuaSpan::description = {
     METATABLE,
     LuaSpan::free,
     {{"context", LuaSpan::context},
+     {"set_operation_name", LuaSpan::set_operation_name},
      {"finish", LuaSpan::finish},
      {"set_tag", LuaSpan::set_tag},
      {"log_kv", LuaSpan::log_kv},
