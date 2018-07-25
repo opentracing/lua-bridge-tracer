@@ -7,9 +7,6 @@ jobs:
       - checkout
       - run: ./ci/setup_build_environment.sh
       - run: ./ci/do_ci.sh test-5.1
-      - store_artifacts:
-          path: /build/Testing/Temporary/LastTest.log
-          destination: Test.log
 
   test-lua5.2:
     docker:
@@ -18,9 +15,6 @@ jobs:
       - checkout
       - run: ./ci/setup_build_environment.sh
       - run: ./ci/do_ci.sh test-5.2
-      - store_artifacts:
-          path: /build/Testing/Temporary/LastTest.log
-          destination: Test.log
 
   test-lua5.3:
     docker:
@@ -29,9 +23,6 @@ jobs:
       - checkout
       - run: ./ci/setup_build_environment.sh
       - run: ./ci/do_ci.sh test-5.3
-      - store_artifacts:
-          path: /build/Testing/Temporary/LastTest.log
-          destination: Test.log
 
   coverage:
     docker:
