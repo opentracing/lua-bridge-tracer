@@ -19,6 +19,37 @@ function read_json(file)
 end
 
 describe("in bridge_tracer", function()
+  describe("tracer construction", function()
+    it("fails when passed an invalid library", function()
+      local errorfn = function()
+        local tracer = bridge_tracer:new("invalid_library", "invalid_config")
+      end
+      assert.has_error(errorfn)
+    end)
+
+    it("fails when passed an invalid tracer config", function()
+      local mocktracer_path = os.getenv("MOCKTRACER")
+      if mocktracer_path == nil then
+        error("MOCKTRACER environmental variable must be set")
+      end
+      local errorfn = function()
+        local tracer = bridge_tracer:new(mocktracer_path, "invalid_config")
+      end
+      assert.has_error(errorfn)
+    end)
+
+    it("supports construction from a valid library and config", function()
+      local json_file = os.tmpname()
+      local tracer = new_mocktracer(json_file)
+      assert.are_not_equals(tracer, nil)
+    end)
+
+    it("supports construction from the C++ global tracer", function()
+      local tracer = bridge_tracer:new_from_global()
+      assert.are_not_equals(tracer, nil)
+    end)
+  end)
+
   describe("the start_span method", function()
     it("creates spans", function()
       json_file = os.tmpname()
