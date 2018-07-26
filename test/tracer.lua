@@ -84,6 +84,29 @@ describe("in bridge_tracer", function()
       assert.has_error(errorfn)
     end)
 
+    it("supports referencing other spans", function()
+      local json_file = os.tmpname()
+      local tracer = new_mocktracer(json_file)
+      local span_a = tracer:start_span("A")
+
+      local span_b = tracer:start_span("B", {["references"] = {{"child_of", span_a:context()}}})
+      span_b:finish()
+
+      local span_c = tracer:start_span("C", {["references"] = {{"follows_from", span_a:context()}}})
+      span_c:finish()
+
+      span_a:finish()
+      tracer:close()
+
+			local json = read_json(json_file)
+			assert.are.equal(#json, 3)
+      local references_b = json[1]["references"]
+			assert.are.equal(#references_b, 1)
+
+      local references_c = json[2]["references"]
+			assert.are.equal(#references_c, 1)
+    end)
+
     it("ignore nil references", function()
       local json_file = os.tmpname()
       local tracer = new_mocktracer(json_file)
