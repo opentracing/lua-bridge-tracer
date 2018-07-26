@@ -151,12 +151,11 @@ describe("in bridge_tracer", function()
       local context3 = tracer:binary_extract(carrier3)
       assert.are_not_equals(context3, nil)
 
-      -- itnores non-string key-value pairs
+      -- ignores non-string key-value pairs
       local tbl = {}
       local carrier4 = {[tbl] = "abc", ["abc"] = tbl}
-      tracer:text_map_inject(span:context(), carrier4)
       local context4 = tracer:text_map_extract(carrier4)
-      assert.are_not_equals(context4, nil)
+      assert.are.equal(context4, nil)
     end)
 
     it("is correctly garbage collected", function()
