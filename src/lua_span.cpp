@@ -1,6 +1,7 @@
 #include "lua_span.h"
 
 #include "lua_span_context.h"
+#include "lua_tracer.h"
 #include "utility.h"
 
 #define METATABLE "lua_opentracing_bridge.span"
@@ -47,6 +48,29 @@ int LuaSpan::set_operation_name(lua_State* L) noexcept {
   auto operation_name_data = luaL_checklstring(L, -1, &operation_name_len);
   span->span_->SetOperationName({operation_name_data, operation_name_len});
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// tracer
+//------------------------------------------------------------------------------
+int LuaSpan::tracer(lua_State* L) noexcept {
+  auto span = check_lua_span(L);
+  auto userdata =
+      static_cast<LuaTracer**>(lua_newuserdata(L, sizeof(LuaTracer*)));
+
+  try {
+    auto tracer = std::unique_ptr<LuaTracer>{new LuaTracer{span->tracer_}};
+    *userdata = tracer.release();
+
+    // tag the metatable
+    luaL_getmetatable(L, LuaTracer::description.metatable);
+    lua_setmetatable(L, -2);
+
+    return 1;
+  } catch (const std::exception& e) {
+    lua_pushstring(L, e.what());
+  }
+  return lua_error(L);
 }
 
 //------------------------------------------------------------------------------
@@ -112,6 +136,9 @@ int LuaSpan::set_tag(lua_State* L) noexcept {
   return lua_error(L);
 }
 
+//------------------------------------------------------------------------------
+// log_kv
+//------------------------------------------------------------------------------
 int LuaSpan::log_kv(lua_State* L) noexcept {
   auto span = check_lua_span(L);
   luaL_checktype(L, -1, LUA_TTABLE);
@@ -169,6 +196,7 @@ const LuaClassDescription LuaSpan::description = {
     METATABLE,
     LuaSpan::free,
     {{"context", LuaSpan::context},
+     {"tracer", LuaSpan::tracer},
      {"set_operation_name", LuaSpan::set_operation_name},
      {"finish", LuaSpan::finish},
      {"set_tag", LuaSpan::set_tag},

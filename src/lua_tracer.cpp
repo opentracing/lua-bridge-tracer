@@ -249,8 +249,8 @@ int LuaTracer::start_span(lua_State* L) noexcept {
     if (span == nullptr) {
       throw std::runtime_error{"unable to create span"};
     }
-    auto lua_span = std::unique_ptr<LuaSpan>{
-        new LuaSpan{std::shared_ptr<opentracing::Span>{span.release()}}};
+    auto lua_span = std::unique_ptr<LuaSpan>{new LuaSpan{
+        tracer->tracer_, std::shared_ptr<opentracing::Span>{span.release()}}};
     *userdata = lua_span.release();
 
     luaL_getmetatable(L, LuaSpan::description.metatable);
