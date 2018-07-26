@@ -153,7 +153,7 @@ describe("in bridge_tracer", function()
 
       -- ignores non-string key-value pairs
       local tbl = {}
-      local carrier4 = {[tbl] = "abc", ["abc"] = tbl}
+      local carrier4 = {["k1"] = "v1", [tbl] = "abc", ["abc"] = tbl}
       local context4 = tracer:text_map_extract(carrier4)
       assert.are.equal(context4, nil)
     end)
