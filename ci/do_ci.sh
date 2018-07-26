@@ -23,7 +23,7 @@ function run_lua_test()
   make && make install
   ldconfig
   cd $SRC_DIR
-  LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.4 busted test/tracer.lua
+  LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libasan.so.5 busted test/tracer.lua
 }
 
 if [[ "$1" == "test-5.3" ]]; then
