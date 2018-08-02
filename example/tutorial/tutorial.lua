@@ -1,7 +1,9 @@
--- Provides an example of basic usage of the opentracing_bridge_tracer
---
--- Run with
---    lua tutorial.lua <path-to-tracer-plugin> <path-to-tracer-config>
+#!/usr/bin/env lua
+--[[
+Provides an example of basic usage of the opentracing_bridge_tracer.
+
+Usage: lua tutorial.lua <path-to-tracer-plugin> <path-to-tracer-config>
+]]
 
 local bridge_tracer = require 'opentracing_bridge_tracer'
 
