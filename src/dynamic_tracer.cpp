@@ -11,12 +11,12 @@ namespace lua_bridge_tracer {
 namespace {
 class DynamicSpan : public opentracing::Span {
  public:
-  DynamicSpan(std::shared_ptr<opentracing::Tracer> tracer,
+  DynamicSpan(std::shared_ptr<const opentracing::Tracer> tracer,
               std::unique_ptr<opentracing::Span>&& span) noexcept
       : tracer_{tracer}, span_{std::move(span)} {}
 
  private:
-  std::shared_ptr<opentracing::Tracer> tracer_;
+  std::shared_ptr<const opentracing::Tracer> tracer_;
   std::unique_ptr<opentracing::Span> span_;
 
   void FinishWithOptions(const opentracing::FinishSpanOptions&
@@ -78,7 +78,7 @@ class DynamicTracer : public opentracing::Tracer,
     auto span = tracer_->StartSpanWithOptions(operation_name, options);
     if (span == nullptr) return nullptr;
     return std::unique_ptr<opentracing::Span>{
-        new (std::nothrow) DynamicSpan(tracer_, std::move(span))};
+        new (std::nothrow) DynamicSpan(shared_from_this(), std::move(span))};
   }
 
   opentracing::expected<void> Inject(const opentracing::SpanContext& sc,
