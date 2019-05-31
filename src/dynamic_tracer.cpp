@@ -165,6 +165,9 @@ class DynamicTracer final : public opentracing::Tracer,
     if (!span_context_maybe) {
       return span_context_maybe;
     }
+    if (*span_context_maybe == nullptr) {
+      return nullptr;
+    }
     return std::unique_ptr<opentracing::SpanContext>{new DynamicSpanContext{
         shared_from_this(), std::move(*span_context_maybe)}};
   }
