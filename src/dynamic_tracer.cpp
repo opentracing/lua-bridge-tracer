@@ -23,7 +23,7 @@ class DynamicSpanContext final : public opentracing::SpanContext {
   }
 
   const opentracing::SpanContext& context() const noexcept { 
-    *return span_context_;
+    return *span_context_;
   }
 
  private:
