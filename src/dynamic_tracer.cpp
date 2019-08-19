@@ -128,8 +128,7 @@ class DynamicTracer final : public opentracing::Tracer,
     if (span_context != nullptr) {
       return tracer_->Inject(span_context->context(), writer);
     }
-    return opentracing::make_unexpected(
-        opentracing::invalid_span_context_error);
+    return tracer_->Inject(sc, writer);
   }
 
   opentracing::expected<void> Inject(
@@ -139,8 +138,7 @@ class DynamicTracer final : public opentracing::Tracer,
     if (span_context != nullptr) {
       return tracer_->Inject(span_context->context(), writer);
     }
-    return opentracing::make_unexpected(
-        opentracing::invalid_span_context_error);
+    return tracer_->Inject(sc, writer);
   }
 
   opentracing::expected<void> Inject(
@@ -150,8 +148,7 @@ class DynamicTracer final : public opentracing::Tracer,
     if (span_context != nullptr) {
       return tracer_->Inject(span_context->context(), writer);
     }
-    return opentracing::make_unexpected(
-        opentracing::invalid_span_context_error);
+    return tracer_->Inject(sc, writer);
   }
 
   opentracing::expected<void> Inject(
@@ -161,8 +158,7 @@ class DynamicTracer final : public opentracing::Tracer,
     if (span_context != nullptr) {
       return tracer_->Inject(span_context->context(), writer);
     }
-    return opentracing::make_unexpected(
-        opentracing::invalid_span_context_error);
+    return tracer_->Inject(sc, writer);
   }
 
   opentracing::expected<std::unique_ptr<opentracing::SpanContext>> Extract(
