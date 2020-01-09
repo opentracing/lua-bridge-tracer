@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 
-ARG OPENTRACING_CPP_VERSION=v1.4.0
-ARG JAEGER_VERSION=v0.4.1
+ARG OPENTRACING_CPP_VERSION=v1.5.1
+ARG JAEGER_VERSION=v0.4.2
 
 COPY . /example
 
@@ -34,7 +34,7 @@ RUN set -x \
   && make && make install \
 ### Install luvit
   && cd / \
-  && curl -L https://github.com/luvit/lit/raw/master/get-lit.sh | sh \
+  && curl -L https://github.com/luvit/lit/raw/3.6.0/get-lit.sh | sh \
 ### Install tracers
   && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so \
 ### Run ldconfig
