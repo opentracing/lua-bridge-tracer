@@ -1,7 +1,7 @@
-FROM ubuntu:18.04
+FROM ubuntu:eoan
 
-ARG OPENTRACING_CPP_VERSION=v1.5.1
-ARG JAEGER_VERSION=v0.4.2
+ARG OPENTRACING_CPP_VERSION=v1.6.0
+ARG JAEGER_VERSION=47fbf19aae2e48d59dd8335b6f2a1e1a99abba7f
 
 COPY . /example
 
@@ -18,6 +18,7 @@ RUN set -x \
               ca-certificates \
               wget \
               lua5.1 lua5.1-dev \
+              libyaml-cpp-dev \
 ### Build opentracing-cpp
   && cd / \
   && git clone -b $OPENTRACING_CPP_VERSION https://github.com/opentracing/opentracing-cpp.git \
@@ -36,7 +37,16 @@ RUN set -x \
   && cd / \
   && curl -L https://github.com/luvit/lit/raw/3.6.0/get-lit.sh | sh \
 ### Install tracers
-  && wget https://github.com/jaegertracing/jaeger-client-cpp/releases/download/${JAEGER_VERSION}/libjaegertracing_plugin.linux_amd64.so -O /usr/local/lib/libjaegertracing_plugin.so \
+  && git clone https://github.com/jaegertracing/jaeger-client-cpp.git \
+  && cd /jaeger-client-cpp \
+  && git checkout ${JAEGER_VERSION} \
+  && mkdir build && cd build \
+  && cmake -DCMAKE_BUILD_TYPE=Release \
+           -DBUILD_TESTING=OFF \
+           -DJAEGERTRACING_WITH_YAML_CPP=ON .. \
+  && make && make install \
+  && ln -s /usr/local/lib/libjaegertracing.so /usr/local/lib/libjaegertracing_plugin.so \
+  && cd / \
 ### Run ldconfig
   && ldconfig
 
