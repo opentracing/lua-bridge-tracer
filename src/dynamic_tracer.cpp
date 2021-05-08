@@ -3,6 +3,7 @@
 #include <opentracing/dynamic_load.h>
 
 #include <stdexcept>
+#include <vector>
 
 namespace lua_bridge_tracer {
 //--------------------------------------------------------------------------------------------------
@@ -24,6 +25,10 @@ class DynamicSpanContext final : public opentracing::SpanContext {
 
   const opentracing::SpanContext& context() const noexcept { 
     return *span_context_;
+  }
+
+  virtual std::unique_ptr<SpanContext> Clone() const noexcept {
+    return span_context_->Clone();
   }
 
  private:
@@ -76,6 +81,18 @@ class DynamicSpan final : public opentracing::Span {
            std::pair<opentracing::string_view, opentracing::Value>>
                fields) noexcept override {
     span_->Log(fields);
+  }
+
+  void Log(opentracing::SystemTime timestamp,
+           std::initializer_list<std::pair<opentracing::string_view, opentracing::Value>>
+               fields) noexcept override {
+    span_->Log(timestamp, fields);
+  }
+
+  void Log(opentracing::SystemTime timestamp,
+           const std::vector<std::pair<opentracing::string_view, opentracing::Value>>&
+               fields) noexcept override {
+    span_->Log(timestamp, fields);
   }
 
   const opentracing::SpanContext& context() const noexcept override {
