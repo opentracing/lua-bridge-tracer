@@ -311,7 +311,7 @@ int LuaTracer::binary_inject(lua_State* L) noexcept {
       throw std::runtime_error{"failed to inject span context: " +
                                was_successful.error().message()};
     }
-    lua_pushstring(L, oss.str().c_str());
+    lua_pushlstring(L, oss.str().c_str(), oss.str().length());
     return 1;
   } catch (const std::exception& e) {
     lua_pushstring(L, e.what());
