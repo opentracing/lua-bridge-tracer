@@ -13,9 +13,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   set(CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS "${CMAKE_SHARED_LIBRARY_CREATE_CXX_FLAGS} -Wl,--unresolved-symbols=ignore-in-object-files")
 endif()
 
-SET(CMAKE_CXX_FLAGS "-g3")
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
 include_directories(SYSTEM ${LUA_INCLUDE_DIR})
 
 add_library(opentracing_bridge_tracer SHARED src/module.cpp

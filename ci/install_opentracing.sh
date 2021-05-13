@@ -10,6 +10,7 @@ mkdir .build && cd .build
 cmake -DCMAKE_BUILD_TYPE=Debug \
       -DBUILD_MOCKTRACER=ON \
       -DBUILD_TESTING=OFF \
+      -DCMAKE_CXX_FLAGS="-fPIC" \
       ..
 make && make install
 popd
