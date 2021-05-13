@@ -131,7 +131,7 @@ class DynamicTracer final : public opentracing::Tracer,
         reference.second = span_context->span_context_.get();
       }
     }
-    auto span = tracer_->StartSpanWithOptions(operation_name, options);
+    auto span = tracer_->StartSpanWithOptions(operation_name, options_prime);
     if (span == nullptr) {
       return nullptr;
     }
